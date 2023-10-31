@@ -103,5 +103,7 @@ class TestExample(ScriptStrategyBase):
 
         self.test_counter = self.test_counter + 1
         self.logger().info(f"test_counter={self.test_counter}")
-        if self.test_counter > 20:
-            raise Exception("Fuck!!!!!!")
+        self.logger().info(f"order_book={order_book}")
+        self.logger().info(f"order_book.name={order_book.name}")
+        # if self.test_counter > 20:
+        #     raise Exception("Fuck!!!!!!")
