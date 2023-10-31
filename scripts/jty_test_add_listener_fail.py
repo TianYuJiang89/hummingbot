@@ -108,7 +108,7 @@ class TestExample(ScriptStrategyBase):
         # calculate cumulative active buy and sell volumes
         asset = event.trading_pair
         cum_activate_buy_vol, cum_activate_sell_vol = self.active_buy_sell_vol[(connector_name, asset)]
-        if event.type.name == " BUY":
+        if event.type.name == "BUY":
             cum_activate_buy_vol = cum_activate_buy_vol + event.amount
         elif event.type.name == "SELL":
             cum_activate_sell_vol = cum_activate_sell_vol + event.amount
