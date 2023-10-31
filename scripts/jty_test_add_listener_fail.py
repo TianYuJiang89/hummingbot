@@ -17,6 +17,9 @@ class TestExample(ScriptStrategyBase):
     markets = {
         'binance_perpetual': {
             'BTC-USDT', 'ETH-USDT',
+        },
+        'binance': {
+            'BNB-USDT',
         }
     }
 
@@ -49,14 +52,15 @@ class TestExample(ScriptStrategyBase):
             for connector_name, connector in self.connectors.items():
                 for asset in self.markets[connector_name]:
                     # conversion_rate = RateOracle.get_instance().get_pair_rate(asset)
-
+                    cum_activate_buy_vol, cum_activate_sell_vol = self.active_buy_sell_vol[(connector_name, asset)]
                     self.logger().info(f"Connector: {connector_name} Asset: {asset} Mid price: {connector.get_mid_price(asset)}")
-
+                    self.logger().info(f"cum_activate_buy_vol= {cum_activate_buy_vol} cum_activate_sell_vol= {cum_activate_sell_vol}")
                     # reset the active trade volume counter
                     self.active_buy_sell_vol[(connector_name, asset)] = 0., 0.
 
                     for event in self.trade_list:
-                        self.logger().info(f"event: {event}")
+                        # self.logger().info(f"event: {event}")
+                        pass
                     self.trade_list = []
 
                     # self.logger().info(f"#"*100)
@@ -71,11 +75,22 @@ class TestExample(ScriptStrategyBase):
         """
         Subscribe to raw trade event.
         """
+        '''
         for connector_name, connector in self.connectors.items():
             for order_book_name, order_book in connector.order_books.items():
                 setattr(self, f"_partial_process_public_trade_{connector_name}_{order_book_name}", functools.partial(self._process_public_trade, connector_name=connector_name))
                 setattr(self, f"_trade_event_forwarder_{connector_name}_{order_book_name}", SourceInfoEventForwarder(getattr(self, f"_partial_process_public_trade_{connector_name}_{order_book_name}")))
                 order_book.add_listener(OrderBookEvent.TradeEvent, getattr(self, f"_trade_event_forwarder_{connector_name}_{order_book_name}"))
+        self.subscribed_to_order_book_trade_event = True
+        '''
+        for connector_name, connector in self.connectors.items():
+            setattr(self, f"_partial_process_public_trade_{connector_name}",
+                    functools.partial(self._process_public_trade, connector_name=connector_name))
+            setattr(self, f"_trade_event_forwarder_{connector_name}",
+                    SourceInfoEventForwarder(getattr(self, f"_partial_process_public_trade_{connector_name}")))
+            for order_book_name, order_book in connector.order_books.items():
+                order_book.add_listener(OrderBookEvent.TradeEvent,
+                                        getattr(self, f"_trade_event_forwarder_{connector_name}"))
         self.subscribed_to_order_book_trade_event = True
 
     def _process_public_trade(self, event_tag: int, order_book: OrderBook, event: OrderBookTradeEvent, connector_name: str):
@@ -101,9 +116,8 @@ class TestExample(ScriptStrategyBase):
 
         self.trade_list.append(event)
 
-        self.test_counter = self.test_counter + 1
-        self.logger().info(f"test_counter={self.test_counter}")
-        self.logger().info(f"order_book={order_book}")
-        self.logger().info(f"order_book.name={order_book.name}")
+        # self.test_counter = self.test_counter + 1
+        # self.logger().info(f"test_counter={self.test_counter}")
+        # self.logger().info(f"asset={asset}")
         # if self.test_counter > 20:
         #     raise Exception("Fuck!!!!!!")
