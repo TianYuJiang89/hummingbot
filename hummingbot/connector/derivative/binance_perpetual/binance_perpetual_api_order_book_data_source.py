@@ -67,6 +67,14 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
             "symbol": ex_trading_pair,
             "limit": "1000"
         }
+        # Begin Modify by tianyu 20230907
+        # Limit           Weight
+        # 5, 10, 20, 50   2
+        # 100             5
+        # 500             10
+        # 1000            20
+        await self._sleep(2)
+        # End Modify by tianyu 20230907
 
         data = await self._connector._api_get(
             path_url=CONSTANTS.SNAPSHOT_REST_URL,

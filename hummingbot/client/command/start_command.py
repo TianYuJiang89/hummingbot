@@ -59,7 +59,15 @@ class StartCommand(GatewayChainApiManager):
     def start(self,  # type: HummingbotApplication
               log_level: Optional[str] = None,
               script: Optional[str] = None,
-              is_quickstart: Optional[bool] = False):
+              is_quickstart: Optional[bool] = False,
+              api_type: Optional[str] = None,
+              ):
+        # Begin Add By Tianyu 20230907
+        if api_type == "td":
+            self._trading_required = True
+        else:
+            self._trading_required = False
+        # End Add By Tianyu 20230907
         if threading.current_thread() != threading.main_thread():
             self.ev_loop.call_soon_threadsafe(self.start, log_level, script)
             return

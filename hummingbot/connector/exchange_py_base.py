@@ -665,6 +665,8 @@ class ExchangePyBase(ExchangeBase, ABC):
         - The polling loop to update order status and balance status using REST API (backup for main update process)
         - The background task to process the events received through the user stream tracker (websocket connection)
         """
+        # Begin Modify by tianyu 20230907
+        """
         self._stop_network()
         self.order_book_tracker.start()
         if self.is_trading_required:
@@ -674,6 +676,19 @@ class ExchangePyBase(ExchangeBase, ABC):
             self._user_stream_tracker_task = self._create_user_stream_tracker_task()
             self._user_stream_event_listener_task = safe_ensure_future(self._user_stream_event_listener())
             self._lost_orders_update_task = safe_ensure_future(self._lost_orders_update_polling_loop())
+        """
+        self._stop_network()
+        if self.is_trading_required:
+            self._trading_rules_polling_task = safe_ensure_future(self._trading_rules_polling_loop())
+            self._trading_fees_polling_task = safe_ensure_future(self._trading_fees_polling_loop())
+            self._status_polling_task = safe_ensure_future(self._status_polling_loop())
+            self._user_stream_tracker_task = self._create_user_stream_tracker_task()
+            self._user_stream_event_listener_task = safe_ensure_future(self._user_stream_event_listener())
+            self._lost_orders_update_task = safe_ensure_future(self._lost_orders_update_polling_loop())
+        else:
+            self.order_book_tracker.start()
+            self._trading_rules_polling_task = safe_ensure_future(self._trading_rules_polling_loop())
+        # End Modify by tianyu 20230907
 
     async def stop_network(self):
         """
