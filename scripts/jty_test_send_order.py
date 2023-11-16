@@ -14,33 +14,35 @@ class BuyOnlyThreeTimesExample(ScriptStrategyBase):
     """
     order_amount_usd = Decimal(100)
     orders_created = 0
-    orders_to_create = 3
+    orders_to_create = 300
     base = "BTC"
     quote = "USDT"
-    '''
+
     markets = {
-        "kucoin_paper_trade": {f"{base}-{quote}"}
-    }
-    '''
-    markets = {
-        "kucoin_paper_trade": {
+        "gate_io_paper_trade": {
             "BTC-USDT"
         }
     }
 
     def on_tick(self):
         if self.orders_created < self.orders_to_create:
-            conversion_rate = RateOracle.get_instance().get_pair_rate(f"{self.base}-USD")
-            amount = self.order_amount_usd / conversion_rate
-            #price = self.connectors["kucoin_paper_trade"].get_mid_price(f"{self.base}-{self.quote}") * Decimal(0.99)
+            # conversion_rate = RateOracle.get_instance().get_pair_rate(f"{self.base}-USD")
+            # amount = self.order_amount_usd / conversion_rate
+            amount = Decimal(0.1)
+            # price = self.connectors["kucoin_paper_trade"].get_mid_price(f"{self.base}-{self.quote}") * Decimal(0.99)
             price = Decimal(1999.)
             self.buy(
-                connector_name="kucoin_paper_trade",
+                connector_name="gate_io_paper_trade",
                 trading_pair="BTC-USDT",
                 amount=amount,
                 order_type=OrderType.LIMIT,
                 price=price,
             )
+
+            for connector_name, connector in self.connectors.items():
+                self.logger().info(f"Connector: {connector_name}")
+                self.logger().info(f"_trading_required: {connector._trading_required}")
+            self.logger().info(f"strategy_instance_id: {self.strategy_instance_id}")
 
     def did_create_buy_order(self, event: BuyOrderCreatedEvent):
         trading_pair = f"{self.base}-{self.quote}"

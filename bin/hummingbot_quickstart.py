@@ -49,7 +49,16 @@ class CmdlineParser(argparse.ArgumentParser):
                           required=False,
                           help="Try to automatically set config / logs / data dir permissions, "
                                "useful for Docker containers.")
-
+        # Begin Add By Tianyu 20230907
+        self.add_argument("--api-type", "-a",
+                          type=str,
+                          required=False,
+                          help="Specify an api type, 'md' for market data, 'td' for trading")
+        self.add_argument("--strategy-instance-id", "-s",
+                          type=str,
+                          required=False,
+                          help="Specify a strategy instance id")
+        # End Add By Tianyu 20230907
 
 def autofix_permissions(user_group_spec: str):
     uid, gid = [sub_str for sub_str in user_group_spec.split(':')]
@@ -116,7 +125,10 @@ async def quick_start(args: argparse.Namespace, secrets_manager: BaseSecretsMana
 
     # The listener needs to have a named variable for keeping reference, since the event listener system
     # uses weak references to remove unneeded listeners.
-    start_listener: UIStartListener = UIStartListener(hb, is_script=is_script, is_quickstart=True)
+    # Begin Add By Tianyu 20230907
+    # start_listener: UIStartListener = UIStartListener(hb, is_script=is_script, is_quickstart=True)
+    start_listener: UIStartListener = UIStartListener(hb, is_script=is_script, is_quickstart=True, api_type=args.api_type, strategy_instance_id=args.strategy_instance_id)
+    # End Add By Tianyu 20230907
     hb.app.add_listener(HummingbotUIEvent.Start, start_listener)
 
     tasks: List[Coroutine] = [hb.run()]
