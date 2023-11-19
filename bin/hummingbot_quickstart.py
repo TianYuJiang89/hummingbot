@@ -149,6 +149,12 @@ def main():
         args.config_file_name = os.environ["CONFIG_FILE_NAME"]
     if args.config_password is None and len(os.environ.get("CONFIG_PASSWORD", "")) > 0:
         args.config_password = os.environ["CONFIG_PASSWORD"]
+    # Begin Add By Tianyu 20230907
+    if args.api_type is None and len(os.environ.get("CONFIG_API_TYPE", "")) > 0:
+        args.api_type = os.environ["CONFIG_API_TYPE"]
+    if args.strategy_instance_id is None and len(os.environ.get("CONFIG_INSTANCE_ID", "")) > 0:
+        args.strategy_instance_id = os.environ["CONFIG_INSTANCE_ID"]
+    # End Add By Tianyu 20230907
 
     # If no password is given from the command line, prompt for one.
     secrets_manager_cls = ETHKeyFileSecretManger
