@@ -156,6 +156,7 @@ def main():
         args.strategy_instance_id = os.environ["CONFIG_INSTANCE_ID"]
     # End Add By Tianyu 20230907
 
+
     # If no password is given from the command line, prompt for one.
     secrets_manager_cls = ETHKeyFileSecretManger
     client_config_map = load_client_config_map_from_file()
