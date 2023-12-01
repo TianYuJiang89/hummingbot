@@ -17,6 +17,9 @@ RUN conda env create -f /tmp/environment.yml && \
 # Copy remaining files
 COPY bin/ bin/
 COPY hummingbot/ hummingbot/
+# Begin Add by Tianyu
+COPY conf/ conf/
+# End Add by Tianyu
 COPY scripts/ scripts/
 COPY scripts/ scripts-copy/
 COPY setup.py .
