@@ -15,34 +15,40 @@ from hummingbot.core.event.events import OrderBookEvent, OrderBookTradeEvent
 from hummingbot.core.rate_oracle.rate_oracle import RateOracle
 from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
 
+from pyignite import Client
+from pyignite.datatypes import MapObject
+import json
 
 class SimpleDataRecorder(ScriptStrategyBase):
     """
     This example shows how to get the ask and bid of a market and log it to the console.
     """
     ######################################################################################################
+    # Begin: Apache Ignite Settings
+    ######################################################################################################
+    ignite_host = "127.0.0.1"
+    ignite_port = 10800
+    config_cache_name = "test_config_cache"
+    data_cache_name = "test_data_cache"
+
+    client = Client()
+    client.connect(ignite_host, ignite_port)
+    config_cache = client.get_or_create_cache(config_cache_name)
+    _, instance_id_market_dict = config_cache.get("instance_id_market_dict")
+
+    data_cache = client.get_or_create_cache(data_cache_name)
+    ######################################################################################################
+    # End: Apache Ignite Settings
+    ######################################################################################################
+
+    ######################################################################################################
     # Begin: Record Range Settings
     ######################################################################################################
     # To configure which exchange/ticker need to be record
-    markets = {
-        "binance_perpetual": {"BTC-USDT", "ETH-USDT"},
-    }
-
+    INSTANCE_NAME = os.getenv("INSTANCE_NAME")
+    markets = json.loads(instance_id_market_dict[INSTANCE_NAME])
     ######################################################################################################
     # End: Record Range Settings
-    ######################################################################################################
-
-    ######################################################################################################
-    # Begin: InfluxDB setting
-    ######################################################################################################
-    url = "http://localhost:8086"
-    org = "hummingbot"
-    bucket = "new"
-    token = os.getenv("INFLUXDB_TOKEN")
-
-    client = InfluxDBClient(url=url, token=token)
-    ######################################################################################################
-    # End: InfluxDB settingjty_simple_data_recorderV2.pyjty_simple_data_recorderV2.py
     ######################################################################################################
 
     ######################################################################################################
@@ -100,17 +106,13 @@ class SimpleDataRecorder(ScriptStrategyBase):
             if not self.subscribed_to_order_book_trade_event:
                 self.subscribe_to_order_book_trade_event()
 
-            # check influxdb
-            is_influxdb_ok = self.client.ping()
-
             # check all
-            if is_rate_oracle_ok & self.subscribed_to_order_book_trade_event & is_influxdb_ok:
+            if is_rate_oracle_ok & self.subscribed_to_order_book_trade_event:
                 self.prepare_ok = True
 
             self.logger().info("!" * 100)
             self.logger().info("is_rate_oracle_ok: %s" % is_rate_oracle_ok)
             self.logger().info("subscribed_to_order_book_trade_event: %s" % self.subscribed_to_order_book_trade_event)
-            self.logger().info("is_influxdb_ok: %s" % is_influxdb_ok)
             self.logger().info("prepare_ok: %s" % self.prepare_ok)
             self.logger().info("!" * 100)
 
@@ -144,28 +146,30 @@ class SimpleDataRecorder(ScriptStrategyBase):
                     # reset the volume weighted average trade price numerator
                     self.vwap_numerator_dict[(connector_name, asset)] = 0.
 
-                    p = Point("quotes")
-                    p.tag("exchange", connector_name)
-                    p.tag("ticker", asset)
+                    p = dict()
+                    p["exchange"] = connector_name
+                    p["ticker"] = asset
                     # TODO: date-time(exchange provided)
-                    p.field("cabv", cum_activate_buy_vol)
-                    p.field("casv", cum_activate_sell_vol)
-                    p.field("vwap", vwap)
-                    p.field("ts", tick_size)
-                    p.field("qcr", quote_conversion_rate)
-                    p.field("funding_rate", funding_rate)
+                    p["cabv"] = cum_activate_buy_vol
+                    p["casv"] = cum_activate_sell_vol
+                    p["vwap"] = vwap
+                    p["ts"] = tick_size
+                    p["qcr"] = quote_conversion_rate
+                    p["funding_rate"] = funding_rate
                     for _ in range(1, self.depth_lvl + 1):
                         bid_result = connector.get_quote_volume_for_base_amount(asset, False, amount * _)
                         avg_bid = bid_result.result_volume / bid_result.query_volume
-                        p.field("bp%s" % _, avg_bid)
+                        p["bp%s" % _] = avg_bid
 
                         ask_result = connector.get_quote_volume_for_base_amount(asset, True, amount * _)
                         avg_ask = ask_result.result_volume / ask_result.query_volume
-                        p.field("ap%s" % _, avg_ask)
+                        p["ap%s" % _] = avg_ask
 
-                    p.time(datetime.utcnow(), WritePrecision.NS)
+                    p["time"] = datetime.utcnow().timestamp()
 
                     quote_list.append(p)
+
+
 
             with self.client.write_api(write_options=SYNCHRONOUS) as write_api:
                 write_api.write(bucket=self.bucket, record=quote_list, org=self.org)
