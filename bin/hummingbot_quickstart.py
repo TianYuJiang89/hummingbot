@@ -54,10 +54,6 @@ class CmdlineParser(argparse.ArgumentParser):
                           type=str,
                           required=False,
                           help="Specify an api type, 'md' for market data, 'td' for trading")
-        self.add_argument("--strategy-instance-id", "-s",
-                          type=str,
-                          required=False,
-                          help="Specify a strategy instance id")
         # End Add By Tianyu 20230907
 
 def autofix_permissions(user_group_spec: str):
@@ -127,7 +123,7 @@ async def quick_start(args: argparse.Namespace, secrets_manager: BaseSecretsMana
     # uses weak references to remove unneeded listeners.
     # Begin Add By Tianyu 20230907
     # start_listener: UIStartListener = UIStartListener(hb, is_script=is_script, is_quickstart=True)
-    start_listener: UIStartListener = UIStartListener(hb, is_script=is_script, is_quickstart=True, api_type=args.api_type, strategy_instance_id=args.strategy_instance_id)
+    start_listener: UIStartListener = UIStartListener(hb, is_script=is_script, is_quickstart=True, api_type=args.api_type)
     # End Add By Tianyu 20230907
     hb.app.add_listener(HummingbotUIEvent.Start, start_listener)
 
@@ -152,8 +148,6 @@ def main():
     # Begin Add By Tianyu 20230907
     if args.api_type is None and len(os.environ.get("CONFIG_API_TYPE", "")) > 0:
         args.api_type = os.environ["CONFIG_API_TYPE"]
-    if args.strategy_instance_id is None and len(os.environ.get("CONFIG_INSTANCE_ID", "")) > 0:
-        args.strategy_instance_id = os.environ["CONFIG_INSTANCE_ID"]
     # End Add By Tianyu 20230907
 
 

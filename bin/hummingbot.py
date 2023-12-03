@@ -29,15 +29,13 @@ class UIStartListener(EventListener):
     def __init__(self, hummingbot_app: HummingbotApplication,
                  is_script: Optional[bool] = False,
                  is_quickstart: Optional[bool] = False,
-                 api_type: Optional[str] = None,
-                 strategy_instance_id: Optional[str] = None,):
+                 api_type: Optional[str] = None,):
         super().__init__()
         self._hb_ref: ReferenceType = ref(hummingbot_app)
         self._is_script = is_script
         self._is_quickstart = is_quickstart
         # Begin Add By Tianyu 20230907
         self._api_type = api_type
-        self._strategy_instance_id = strategy_instance_id
         # End Add By Tianyu 20230907
 
     def __call__(self, _):
@@ -59,8 +57,7 @@ class UIStartListener(EventListener):
             hb.start(log_level=hb.client_config_map.log_level,
                      script=hb.strategy_name if self._is_script else None,
                      is_quickstart=self._is_quickstart,
-                     api_type=self._api_type,
-                     strategy_instance_id=self._strategy_instance_id)
+                     api_type=self._api_type)
             # End Add By Tianyu 20230907
 
 async def main_async(client_config_map: ClientConfigAdapter):

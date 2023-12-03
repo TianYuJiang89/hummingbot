@@ -73,7 +73,6 @@ def load_parser(hummingbot: "HummingbotApplication", command_tabs) -> [ThrowingA
     start_parser.add_argument("--script", type=str, dest="script", help="Script strategy file name")
     # Begin Add By Tianyu 20230907
     start_parser.add_argument("--api_type", type=str, dest="api_type", help="md or td")
-    start_parser.add_argument("--strategy_instance_id", type=str, dest="strategy_instance_id", help="strategy instance id: str")
     # End Add By Tianyu 20230907
 
     start_parser.set_defaults(func=hummingbot.start)

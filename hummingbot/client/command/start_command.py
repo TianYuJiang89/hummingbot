@@ -61,15 +61,12 @@ class StartCommand(GatewayChainApiManager):
               script: Optional[str] = None,
               is_quickstart: Optional[bool] = False,
               api_type: Optional[str] = None,
-              strategy_instance_id: Optional[str] = None,
               ):
         # Begin Add By Tianyu 20230907
         if api_type == "td":
             self._trading_required = True
         else:
             self._trading_required = False
-
-        self._strategy_instance_id = strategy_instance_id
         # End Add By Tianyu 20230907
         if threading.current_thread() != threading.main_thread():
             self.ev_loop.call_soon_threadsafe(self.start, log_level, script)
@@ -213,9 +210,6 @@ class StartCommand(GatewayChainApiManager):
             markets_list.append((conn, list(pairs)))
         self._initialize_markets(markets_list)
         self.strategy = script_strategy(self.markets)
-        # Begin Add By Tianyu 20230907
-        self.strategy.strategy_instance_id = self._strategy_instance_id
-        # End Add By Tianyu 20230907
 
     def load_script_class(self):
         """

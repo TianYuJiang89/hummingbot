@@ -73,7 +73,7 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
         # 100             5
         # 500             10
         # 1000            20
-        await self._sleep(2)
+        await self._sleep(0.5)
         # End Modify by tianyu 20230907
 
         data = await self._connector._api_get(
