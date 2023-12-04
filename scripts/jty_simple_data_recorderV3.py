@@ -5,8 +5,6 @@ from datetime import datetime
 from decimal import Decimal
 
 import numpy as np
-from influxdb_client import InfluxDBClient, Point, WritePrecision
-from influxdb_client.client.write_api import SYNCHRONOUS
 
 # from hummingbot.connector.connector_base import ConnectorBase
 from hummingbot.core.data_type.order_book import OrderBook
@@ -15,8 +13,7 @@ from hummingbot.core.event.events import OrderBookEvent, OrderBookTradeEvent
 from hummingbot.core.rate_oracle.rate_oracle import RateOracle
 from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
 
-from pyignite import Client
-from pyignite.datatypes import MapObject
+import redis
 import json
 
 class SimpleDataRecorder(ScriptStrategyBase):
@@ -24,19 +21,15 @@ class SimpleDataRecorder(ScriptStrategyBase):
     This example shows how to get the ask and bid of a market and log it to the console.
     """
     ######################################################################################################
-    # Begin: Apache Ignite Settings
+    # Begin: Redis Settings
     ######################################################################################################
-    ignite_host = "127.0.0.1"
-    ignite_port = 10800
-    config_cache_name = "test_config_cache"
+    redis_host = "localhost"
+    redis_port = 6379
+    config_cache_name = "test_instance_markets_cache"
     data_cache_name = "test_data_cache"
 
-    client = Client()
-    client.connect(ignite_host, ignite_port)
-    config_cache = client.get_or_create_cache(config_cache_name)
-    _, instance_id_market_dict = config_cache.get("instance_id_market_dict")
-
-    data_cache = client.get_or_create_cache(data_cache_name)
+    pool = redis.ConnectionPool(host=redis_host, port=redis_port, decode_responses=True)
+    r = redis.Redis(connection_pool=pool)
     ######################################################################################################
     # End: Apache Ignite Settings
     ######################################################################################################
@@ -46,7 +39,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
     ######################################################################################################
     # To configure which exchange/ticker need to be record
     INSTANCE_NAME = os.getenv("INSTANCE_NAME")
-    markets = json.loads(instance_id_market_dict[INSTANCE_NAME])
+    markets = json.loads(r.hget(config_cache_name, INSTANCE_NAME))
     ######################################################################################################
     # End: Record Range Settings
     ######################################################################################################
@@ -64,7 +57,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
     # to record actual trades happened within the interval
     # trade_list = []
     # initialize dict to store volume weighted average trade price numerator
-    vwap_numerator_dict = {(connector_name, asset): (0., 0.) for connector_name, assets in markets.items() for asset in
+    vwap_numerator_dict = {(connector_name, asset): 0. for connector_name, assets in markets.items() for asset in
                            assets}
 
     # quote currency conversion rate
@@ -79,8 +72,8 @@ class SimpleDataRecorder(ScriptStrategyBase):
     ######################################################################################################
     # variable for calculating the "dollar amount mid" and "dollar amount bid" and "dollar amount ask"
     volume_measurement_amount = Decimal(100.)
-    # portfolio_currency = "USDT"
-    portfolio_currency = "USD"
+    portfolio_currency = "USDT"
+    # portfolio_currency = "USD"
 
     # notes about quote_conversion_rate:
     # conversion rate = the exchange rate of quote_asset/portfolio_currency
@@ -153,7 +146,8 @@ class SimpleDataRecorder(ScriptStrategyBase):
                     p["cabv"] = cum_activate_buy_vol
                     p["casv"] = cum_activate_sell_vol
                     p["vwap"] = vwap
-                    p["ts"] = tick_size
+                    p["ts"] = tickstop
+                    _size
                     p["qcr"] = quote_conversion_rate
                     p["funding_rate"] = funding_rate
                     for _ in range(1, self.depth_lvl + 1):
@@ -169,10 +163,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
 
                     quote_list.append(p)
 
-
-
-            with self.client.write_api(write_options=SYNCHRONOUS) as write_api:
-                write_api.write(bucket=self.bucket, record=quote_list, org=self.org)
+            self.r.hset(self.data_cache_name, self.INSTANCE_NAME, json.dumps(quote_list, default=str))
 
             end = time.time()
             self.logger().info("log quote spent time: %s" % (end - start))
@@ -209,6 +200,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
         """
         Subscribe to raw trade event.
         """
+        '''
         for connector_name, connector in self.connectors.items():
             for order_book_name, order_book in connector.order_books.items():
                 setattr(self, f"_partial_process_public_trade_{connector_name}_{order_book_name}",
@@ -217,6 +209,15 @@ class SimpleDataRecorder(ScriptStrategyBase):
                     getattr(self, f"_partial_process_public_trade_{connector_name}_{order_book_name}")))
                 order_book.add_listener(OrderBookEvent.TradeEvent,
                                         getattr(self, f"_trade_event_forwarder_{connector_name}_{order_book_name}"))
+        '''
+        for connector_name, connector in self.connectors.items():
+            setattr(self, f"_partial_process_public_trade_{connector_name}",
+                    functools.partial(self._process_public_trade, connector_name=connector_name))
+            setattr(self, f"_trade_event_forwarder_{connector_name}", SourceInfoEventForwarder(
+                getattr(self, f"_partial_process_public_trade_{connector_name}")))
+            for order_book_name, order_book in connector.order_books.items():
+                order_book.add_listener(OrderBookEvent.TradeEvent,
+                                        getattr(self, f"_trade_event_forwarder_{connector_name}"))
         self.subscribed_to_order_book_trade_event = True
 
     def _process_public_trade(self, event_tag: int, order_book: OrderBook, event: OrderBookTradeEvent,
