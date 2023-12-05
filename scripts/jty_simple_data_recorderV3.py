@@ -25,8 +25,10 @@ class SimpleDataRecorder(ScriptStrategyBase):
     ######################################################################################################
     redis_host = "localhost"
     redis_port = 6379
-    config_cache_name = "test_instance_markets_cache"
-    data_cache_name = "test_data_cache"
+    # config_cache_name = "test_instance_markets_cache"
+    # data_cache_name = "test_data_cache"
+    config_cache_name = "instance_markets_cache"
+    data_cache_name = "data_cache"
 
     pool = redis.ConnectionPool(host=redis_host, port=redis_port, decode_responses=True)
     r = redis.Redis(connection_pool=pool)
@@ -72,8 +74,8 @@ class SimpleDataRecorder(ScriptStrategyBase):
     ######################################################################################################
     # variable for calculating the "dollar amount mid" and "dollar amount bid" and "dollar amount ask"
     volume_measurement_amount = Decimal(100.)
-    portfolio_currency = "USDT"
-    # portfolio_currency = "USD"
+    # portfolio_currency = "USDT"
+    portfolio_currency = "USD"
 
     # notes about quote_conversion_rate:
     # conversion rate = the exchange rate of quote_asset/portfolio_currency
