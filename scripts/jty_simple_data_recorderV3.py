@@ -29,6 +29,8 @@ class SimpleDataRecorder(ScriptStrategyBase):
     # data_cache_name = "test_data_cache"
     config_cache_name = "instance_markets_cache"
     data_cache_name = "data_cache"
+    log_cache_name = "spend_time"
+    heartbeat_cache_name = "lastupddttm"
 
     pool = redis.ConnectionPool(host=redis_host, port=redis_port, decode_responses=True)
     r = redis.Redis(connection_pool=pool)
@@ -148,8 +150,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
                     p["cabv"] = cum_activate_buy_vol
                     p["casv"] = cum_activate_sell_vol
                     p["vwap"] = vwap
-                    p["ts"] = tickstop
-                    _size
+                    p["ts"] = tick_size
                     p["qcr"] = quote_conversion_rate
                     p["funding_rate"] = funding_rate
                     for _ in range(1, self.depth_lvl + 1):
@@ -168,7 +169,9 @@ class SimpleDataRecorder(ScriptStrategyBase):
             self.r.hset(self.data_cache_name, self.INSTANCE_NAME, json.dumps(quote_list, default=str))
 
             end = time.time()
-            self.logger().info("log quote spent time: %s" % (end - start))
+            # self.logger().info("log quote spent time: %s" % (end - start))
+            self.r.hset(self.log_cache_name, self.INSTANCE_NAME, (end - start))
+            self.r.hset(self.heartbeat_cache_name, self.INSTANCE_NAME, datetime.utcnow().timestamp())
 
             # start = time.time()
             # self.logger().info("len(trade_list): %s" % len(self.trade_list))
