@@ -35,7 +35,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
     pool = redis.ConnectionPool(host=redis_host, port=redis_port, decode_responses=True)
     r = redis.Redis(connection_pool=pool)
     ######################################################################################################
-    # End: Apache Ignite Settings
+    # End: Redis Settings
     ######################################################################################################
 
     ######################################################################################################
