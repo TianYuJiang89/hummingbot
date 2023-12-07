@@ -6,7 +6,8 @@ class LogPricesExample(ScriptStrategyBase):
     This example shows how to get the ask and bid of a market and log it to the console.
     """
     markets = {
-        "gate_io_paper_trade": {"ETH-USDT"}
+        # "gate_io_paper_trade": {"ETH-USDT"},
+        "binance_perpetual": {"ETH-USDT"},
     }
 
     def on_tick(self):
