@@ -115,8 +115,15 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
             for stream_id, channel in stream_id_channel_pairs:
                 params = []
                 for trading_pair in self._trading_pairs:
-                    symbol = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
-                    params.append(f"{symbol.lower()}{channel}")
+                    # Begin Modify by tianyu 20230907
+                    # symbol = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
+                    # params.append(f"{symbol.lower()}{channel}")
+                    try:
+                        symbol = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
+                        params.append(f"{symbol.lower()}{channel}")
+                    except KeyError:
+                        continue
+                    # End Modify by tianyu 20230907
                 payload = {
                     "method": "SUBSCRIBE",
                     "params": params,

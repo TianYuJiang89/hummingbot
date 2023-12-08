@@ -25,10 +25,6 @@ class OrderBookTrackerDataSource(metaclass=ABCMeta):
         self._order_book_create_function = lambda: OrderBook()
         self._message_queue: Dict[str, asyncio.Queue] = defaultdict(asyncio.Queue)
 
-        # Begin Modify by tianyu 20230907
-        self._trading_pairs_retry_counter: Dict[str: int] = {trading_pair: 0 for trading_pair in trading_pairs}
-        # End Modify by tianyu 20230907
-
     @classmethod
     def logger(cls) -> HummingbotLogger:
         if cls._logger is None:
