@@ -368,8 +368,15 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
 
     async def _init_funding_info(self):
         for trading_pair in self.trading_pairs:
-            funding_info = await self._orderbook_ds.get_funding_info(trading_pair)
-            self._perpetual_trading.initialize_funding_info(funding_info)
+            # Begin Modify by tianyu 20230907
+            # funding_info = await self._orderbook_ds.get_funding_info(trading_pair)
+            # self._perpetual_trading.initialize_funding_info(funding_info)
+            try:
+                funding_info = await self._orderbook_ds.get_funding_info(trading_pair)
+                self._perpetual_trading.initialize_funding_info(funding_info)
+            except KeyError:
+                continue
+            # End Modify by tianyu 20230907
 
     async def _funding_payment_polling_loop(self):
         """
