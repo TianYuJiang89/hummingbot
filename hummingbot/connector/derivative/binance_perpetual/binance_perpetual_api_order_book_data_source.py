@@ -63,17 +63,19 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
     async def _request_order_book_snapshot(self, trading_pair: str) -> Dict[str, Any]:
         ex_trading_pair = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
 
-        params = {
-            "symbol": ex_trading_pair,
-            "limit": "1000"
-        }
         # Begin Modify by tianyu 20230907
         # Limit           Weight
         # 5, 10, 20, 50   2
         # 100             5
         # 500             10
         # 1000            20
-        await self._sleep(0.5)
+        params = {
+            "symbol": ex_trading_pair,
+            # "limit": "1000",
+            "limit": "50",
+        }
+
+        await self._sleep(1.)
         # End Modify by tianyu 20230907
 
         data = await self._connector._api_get(
