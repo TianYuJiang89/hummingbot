@@ -182,9 +182,17 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
         while True:
             try:
                 for trading_pair in self._trading_pairs:
-                    snapshot_msg: OrderBookMessage = await self._order_book_snapshot(trading_pair)
-                    output.put_nowait(snapshot_msg)
-                    self.logger().debug(f"Saved order book snapshot for {trading_pair}")
+                    # Begin Modify by tianyu 20230907
+                    # snapshot_msg: OrderBookMessage = await self._order_book_snapshot(trading_pair)
+                    # output.put_nowait(snapshot_msg)
+                    # self.logger().debug(f"Saved order book snapshot for {trading_pair}")
+                    try:
+                        snapshot_msg: OrderBookMessage = await self._order_book_snapshot(trading_pair)
+                        output.put_nowait(snapshot_msg)
+                        self.logger().debug(f"Saved order book snapshot for {trading_pair}")
+                    except KeyError:
+                        continue
+                    # Begin Modify by tianyu 20230907
                 delta = CONSTANTS.ONE_HOUR - time.time() % CONSTANTS.ONE_HOUR
                 await self._sleep(delta)
             except asyncio.CancelledError:
