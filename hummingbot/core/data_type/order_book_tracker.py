@@ -192,7 +192,10 @@ class OrderBookTracker:
                                    f"{index + 1}/{len(self._trading_pairs)} completed.")
                 await self._sleep(delay=1)
             except KeyError:
-                self._trading_pairs.remove(trading_pair)
+                try:
+                    self._trading_pairs.remove(trading_pair)
+                except ValueError:
+                    pass
                 continue
             # End Modify by tianyu 20230907
         self._order_books_initialized.set()

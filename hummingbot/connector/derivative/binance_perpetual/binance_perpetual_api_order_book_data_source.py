@@ -122,7 +122,10 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                         symbol = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
                         params.append(f"{symbol.lower()}{channel}")
                     except KeyError:
-                        self._trading_pairs.remove(trading_pair)
+                        try:
+                            self._trading_pairs.remove(trading_pair)
+                        except ValueError:
+                            pass
                         continue
                     # End Modify by tianyu 20230907
                 payload = {
@@ -192,7 +195,10 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                         output.put_nowait(snapshot_msg)
                         self.logger().debug(f"Saved order book snapshot for {trading_pair}")
                     except KeyError:
-                        self._trading_pairs.remove(trading_pair)
+                        try:
+                            self._trading_pairs.remove(trading_pair)
+                        except ValueError:
+                            pass
                         continue
                     # Begin Modify by tianyu 20230907
                 delta = CONSTANTS.ONE_HOUR - time.time() % CONSTANTS.ONE_HOUR
