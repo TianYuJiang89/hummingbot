@@ -122,6 +122,7 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                         symbol = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
                         params.append(f"{symbol.lower()}{channel}")
                     except KeyError:
+                        self._trading_pairs.remove(trading_pair)
                         continue
                     # End Modify by tianyu 20230907
                 payload = {
