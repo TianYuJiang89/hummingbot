@@ -375,6 +375,7 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
                 funding_info = await self._orderbook_ds.get_funding_info(trading_pair)
                 self._perpetual_trading.initialize_funding_info(funding_info)
             except KeyError:
+                self.trading_pairs.remove(trading_pair)
                 continue
             # End Modify by tianyu 20230907
 

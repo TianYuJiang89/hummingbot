@@ -192,6 +192,7 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                         output.put_nowait(snapshot_msg)
                         self.logger().debug(f"Saved order book snapshot for {trading_pair}")
                     except KeyError:
+                        self._trading_pairs.remove(trading_pair)
                         continue
                     # Begin Modify by tianyu 20230907
                 delta = CONSTANTS.ONE_HOUR - time.time() % CONSTANTS.ONE_HOUR
