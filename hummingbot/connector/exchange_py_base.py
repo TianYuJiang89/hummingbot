@@ -167,6 +167,11 @@ class ExchangePyBase(ExchangeBase, ABC):
 
     @property
     def status_dict(self) -> Dict[str, bool]:
+        self.logger().error(f"symbols_mapping_initialized= {self.trading_pair_symbol_map_ready()}")
+        self.logger().error(f"order_books_initialized= {self.order_book_tracker.ready}")
+        self.logger().error(f"account_balance= {not self.is_trading_required or len(self._account_balances) > 0}")
+        self.logger().error(f"trading_rule_initialized= {len(self._trading_rules) > 0 if self.is_trading_required else True}")
+        self.logger().error(f"user_stream_initialized= {self._is_user_stream_initialized()}")
         return {
             "symbols_mapping_initialized": self.trading_pair_symbol_map_ready(),
             "order_books_initialized": self.order_book_tracker.ready,
