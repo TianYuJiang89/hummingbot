@@ -121,7 +121,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
 
             quote_list = []
             for connector_name, connector in self.connectors.items():
-                for asset in connector.all_trading_pairs():
+                for asset in connector.trading_pairs:
                     base_asset, quote_asset = asset.split("-")
                     quote_conversion_rate = self.quote_conversion_rate_dict[quote_asset]
                     mid_price = connector.get_mid_price(asset)
