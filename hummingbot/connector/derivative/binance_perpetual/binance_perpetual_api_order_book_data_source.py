@@ -14,6 +14,7 @@ from hummingbot.core.web_assistant.connections.data_types import WSJSONRequest
 from hummingbot.core.web_assistant.web_assistants_factory import WebAssistantsFactory
 from hummingbot.core.web_assistant.ws_assistant import WSAssistant
 from hummingbot.logger import HummingbotLogger
+import traceback
 
 if TYPE_CHECKING:
     from hummingbot.connector.derivative.binance_perpetual.binance_perpetual_derivative import (
@@ -122,6 +123,7 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                         symbol = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
                         params.append(f"{symbol.lower()}{channel}")
                     except KeyError:
+                        self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
                         try:
                             self._trading_pairs.remove(trading_pair)
                         except ValueError:
@@ -195,6 +197,7 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                         output.put_nowait(snapshot_msg)
                         self.logger().debug(f"Saved order book snapshot for {trading_pair}")
                     except KeyError:
+                        self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
                         try:
                             self._trading_pairs.remove(trading_pair)
                         except ValueError:
@@ -214,9 +217,7 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
     async def _parse_funding_info_message(self, raw_message: Dict[str, Any], message_queue: asyncio.Queue):
 
         data: Dict[str, Any] = raw_message["data"]
-        self.logger().error(f"data[s]={data['s']}")
         trading_pair = await self._connector.trading_pair_associated_to_exchange_symbol(data["s"])
-        self.logger().error(f"trading_pair={trading_pair}")
         if trading_pair not in self._trading_pairs:
             return
         funding_info = FundingInfoUpdate(

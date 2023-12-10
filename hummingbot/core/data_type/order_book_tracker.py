@@ -14,7 +14,7 @@ from hummingbot.core.data_type.order_book_tracker_data_source import OrderBookTr
 from hummingbot.core.event.events import OrderBookTradeEvent
 from hummingbot.core.utils.async_utils import safe_ensure_future
 from hummingbot.logger import HummingbotLogger
-
+import traceback
 
 class OrderBookTrackerDataSourceType(Enum):
     REMOTE_API = 2
@@ -192,6 +192,7 @@ class OrderBookTracker:
                                    f"{index + 1}/{len(self._trading_pairs)} completed.")
                 await self._sleep(delay=1)
             except KeyError:
+                self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
                 try:
                     self._trading_pairs.remove(trading_pair)
                 except ValueError:

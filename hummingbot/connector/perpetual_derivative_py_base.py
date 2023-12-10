@@ -20,6 +20,7 @@ from hummingbot.core.event.events import (
     PositionModeChangeEvent,
 )
 from hummingbot.core.utils.async_utils import safe_ensure_future, safe_gather
+import traceback
 
 if TYPE_CHECKING:
     from hummingbot.client.config.config_helpers import ClientConfigAdapter
@@ -375,6 +376,7 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
                 funding_info = await self._orderbook_ds.get_funding_info(trading_pair)
                 self._perpetual_trading.initialize_funding_info(funding_info)
             except KeyError:
+                self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
                 try:
                     self.trading_pairs.remove(trading_pair)
                 except ValueError:
