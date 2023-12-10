@@ -377,11 +377,10 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
                 self._perpetual_trading.initialize_funding_info(funding_info)
             except KeyError:
                 self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
-                self.trading_pairs.remove(trading_pair)
-                # try:
-                #     self.trading_pairs.remove(trading_pair)
-                # except ValueError:
-                #     pass
+                try:
+                    self.trading_pairs.remove(trading_pair)
+                except ValueError:
+                    pass
                 continue
             # End Modify by tianyu 20230907
 

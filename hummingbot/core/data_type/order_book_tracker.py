@@ -193,11 +193,10 @@ class OrderBookTracker:
                 await self._sleep(delay=1)
             except KeyError:
                 self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
-                self._trading_pairs.remove(trading_pair)
-                # try:
-                #     self._trading_pairs.remove(trading_pair)
-                # except ValueError:
-                #     pass
+                try:
+                    self._trading_pairs.remove(trading_pair)
+                except ValueError:
+                    pass
                 continue
             # End Modify by tianyu 20230907
         self._order_books_initialized.set()

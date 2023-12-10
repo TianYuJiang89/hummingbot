@@ -124,11 +124,10 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                         params.append(f"{symbol.lower()}{channel}")
                     except KeyError:
                         self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
-                        self._trading_pairs.remove(trading_pair)
-                        # try:
-                        #     self._trading_pairs.remove(trading_pair)
-                        # except ValueError:
-                        #     pass
+                        try:
+                            self._trading_pairs.remove(trading_pair)
+                        except ValueError:
+                            pass
                         continue
                     # End Modify by tianyu 20230907
                 payload = {
@@ -199,13 +198,12 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                         self.logger().debug(f"Saved order book snapshot for {trading_pair}")
                     except KeyError:
                         self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
-                        self._trading_pairs.remove(trading_pair)
-                        # try:
-                        #     self._trading_pairs.remove(trading_pair)
-                        # except ValueError:
-                        #     pass
+                        try:
+                            self._trading_pairs.remove(trading_pair)
+                        except ValueError:
+                            pass
                         continue
-                    # Begin Modify by tianyu 20230907
+                    # End Modify by tianyu 20230907
                 delta = CONSTANTS.ONE_HOUR - time.time() % CONSTANTS.ONE_HOUR
                 await self._sleep(delta)
             except asyncio.CancelledError:
