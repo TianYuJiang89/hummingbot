@@ -368,7 +368,7 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
         )
 
     async def _init_funding_info(self):
-        for trading_pair in self.trading_pairs:
+        for trading_pair in self.trading_pairs[:]:
             # Begin Modify by tianyu 20230907
             # funding_info = await self._orderbook_ds.get_funding_info(trading_pair)
             # self._perpetual_trading.initialize_funding_info(funding_info)
@@ -377,10 +377,11 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
                 self._perpetual_trading.initialize_funding_info(funding_info)
             except KeyError:
                 self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
-                try:
-                    self.trading_pairs.remove(trading_pair)
-                except ValueError:
-                    pass
+                self.trading_pairs.remove(trading_pair)
+                # try:
+                #     self.trading_pairs.remove(trading_pair)
+                # except ValueError:
+                #     pass
                 continue
             # End Modify by tianyu 20230907
 

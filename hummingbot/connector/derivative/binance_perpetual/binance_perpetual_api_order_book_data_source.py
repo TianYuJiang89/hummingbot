@@ -115,7 +115,7 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
             ]
             for stream_id, channel in stream_id_channel_pairs:
                 params = []
-                for trading_pair in self._trading_pairs:
+                for trading_pair in self._trading_pairs[:]:
                     # Begin Modify by tianyu 20230907
                     # symbol = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
                     # params.append(f"{symbol.lower()}{channel}")
@@ -124,10 +124,11 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                         params.append(f"{symbol.lower()}{channel}")
                     except KeyError:
                         self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
-                        try:
-                            self._trading_pairs.remove(trading_pair)
-                        except ValueError:
-                            pass
+                        self._trading_pairs.remove(trading_pair)
+                        # try:
+                        #     self._trading_pairs.remove(trading_pair)
+                        # except ValueError:
+                        #     pass
                         continue
                     # End Modify by tianyu 20230907
                 payload = {
@@ -187,7 +188,7 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
     async def listen_for_order_book_snapshots(self, ev_loop: asyncio.BaseEventLoop, output: asyncio.Queue):
         while True:
             try:
-                for trading_pair in self._trading_pairs:
+                for trading_pair in self._trading_pairs[:]:
                     # Begin Modify by tianyu 20230907
                     # snapshot_msg: OrderBookMessage = await self._order_book_snapshot(trading_pair)
                     # output.put_nowait(snapshot_msg)
@@ -198,10 +199,11 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                         self.logger().debug(f"Saved order book snapshot for {trading_pair}")
                     except KeyError:
                         self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
-                        try:
-                            self._trading_pairs.remove(trading_pair)
-                        except ValueError:
-                            pass
+                        self._trading_pairs.remove(trading_pair)
+                        # try:
+                        #     self._trading_pairs.remove(trading_pair)
+                        # except ValueError:
+                        #     pass
                         continue
                     # Begin Modify by tianyu 20230907
                 delta = CONSTANTS.ONE_HOUR - time.time() % CONSTANTS.ONE_HOUR

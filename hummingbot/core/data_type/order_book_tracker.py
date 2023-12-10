@@ -176,7 +176,7 @@ class OrderBookTracker:
         """
         Initialize order books
         """
-        for index, trading_pair in enumerate(self._trading_pairs):
+        for index, trading_pair in enumerate(self._trading_pairs[:]):
             # Begin Modify by tianyu 20230907
             # self._order_books[trading_pair] = await self._initial_order_book_for_trading_pair(trading_pair)
             # self._tracking_message_queues[trading_pair] = asyncio.Queue()
@@ -193,10 +193,11 @@ class OrderBookTracker:
                 await self._sleep(delay=1)
             except KeyError:
                 self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
-                try:
-                    self._trading_pairs.remove(trading_pair)
-                except ValueError:
-                    pass
+                self._trading_pairs.remove(trading_pair)
+                # try:
+                #     self._trading_pairs.remove(trading_pair)
+                # except ValueError:
+                #     pass
                 continue
             # End Modify by tianyu 20230907
         self._order_books_initialized.set()
