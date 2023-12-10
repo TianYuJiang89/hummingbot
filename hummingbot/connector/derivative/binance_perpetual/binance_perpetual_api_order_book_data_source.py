@@ -214,8 +214,9 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
     async def _parse_funding_info_message(self, raw_message: Dict[str, Any], message_queue: asyncio.Queue):
 
         data: Dict[str, Any] = raw_message["data"]
+        self.logger().error(f"data[s]={data['s']}")
         trading_pair = await self._connector.trading_pair_associated_to_exchange_symbol(data["s"])
-
+        self.logger().error(f"trading_pair={trading_pair}")
         if trading_pair not in self._trading_pairs:
             return
         funding_info = FundingInfoUpdate(
