@@ -73,10 +73,10 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
         params = {
             "symbol": ex_trading_pair,
             # "limit": "1000",
-            "limit": "50",
+            "limit": "100",
         }
 
-        await self._sleep(1.)
+        await self._sleep(0.5)
         # End Modify by tianyu 20230907
 
         data = await self._connector._api_get(

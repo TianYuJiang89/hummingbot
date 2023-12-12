@@ -151,19 +151,19 @@ class SimpleDataRecorder(ScriptStrategyBase):
                     p["cabv"] = cum_activate_buy_vol
                     p["casv"] = cum_activate_sell_vol
                     p["vwap"] = vwap
-                    p["ts"] = tick_size
-                    p["qcr"] = quote_conversion_rate
-                    p["funding_rate"] = funding_rate
+                    p["ts"] = float(tick_size)
+                    p["qcr"] = float(quote_conversion_rate)
+                    p["funding_rate"] = float(funding_rate)
                     for _ in range(1, self.depth_lvl + 1):
                         bid_result = connector.get_quote_volume_for_base_amount(asset, False, amount * _)
                         avg_bid = bid_result.result_volume / bid_result.query_volume
-                        p["bp%s" % _] = avg_bid
+                        p["bp%s" % _] = float(avg_bid)
 
                         ask_result = connector.get_quote_volume_for_base_amount(asset, True, amount * _)
                         avg_ask = ask_result.result_volume / ask_result.query_volume
-                        p["ap%s" % _] = avg_ask
+                        p["ap%s" % _] = float(avg_ask)
 
-                    p["time"] = datetime.utcnow().timestamp()
+                    p["time"] = float(datetime.utcnow().timestamp())
 
                     quote_list.append(p)
 
