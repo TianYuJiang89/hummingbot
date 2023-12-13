@@ -145,6 +145,10 @@ class SimpleDataRecorder(ScriptStrategyBase):
                     self.vwap_numerator_dict[(connector_name, asset)] = 0.
 
                     p = dict()
+                    p["influx_point"] = "quotes"
+                    p["influx_bucket"] = connector_name + "_md"
+                    p["influx_tag_keys"] = ["exchange", "ticker"]
+
                     p["exchange"] = connector_name
                     p["ticker"] = asset
                     # TODO: date-time(exchange provided)
