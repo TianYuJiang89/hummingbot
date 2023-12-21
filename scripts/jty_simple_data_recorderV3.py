@@ -172,7 +172,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
                     p["time"] = float(datetime.utcnow().timestamp())
 
                     # quote_list.append(p)
-                    key = json.dumps(key)
+                    key = json.dumps((connector_name, asset))
                     quote_dict[key] = json.dumps(p)
                     lastupddttm_dict[key] = datetime.utcnow().timestamp()
 
