@@ -115,11 +115,13 @@ class SimpleDataRecorder(ScriptStrategyBase):
             self.logger().info("!" * 100)
 
         if self.prepare_ok:
-            start = time.time()
+            # start = time.time()
 
             self.refresh_conversion_rate_dict()
 
-            quote_list = []
+            # quote_list = []
+            quote_dict = dict()
+            lastupddttm_dict = dict()
             for connector_name, connector in self.connectors.items():
                 for asset in connector.trading_pairs:
                     base_asset, quote_asset = asset.split("-")
@@ -169,14 +171,20 @@ class SimpleDataRecorder(ScriptStrategyBase):
 
                     p["time"] = float(datetime.utcnow().timestamp())
 
-                    quote_list.append(p)
+                    # quote_list.append(p)
+                    key = json.dumps(key)
+                    quote_dict[key] = json.dumps(p)
+                    lastupddttm_dict[key] = datetime.utcnow().timestamp()
 
-            self.r.hset(self.data_cache_name, self.INSTANCE_NAME, json.dumps(quote_list, default=str))
+            # self.r.hset(self.data_cache_name, self.INSTANCE_NAME, json.dumps(quote_list, default=str))
+            self.r.hset(self.data_cache_name, mapping=quote_dict)
+            self.r.hset(self.heartbeat_cache_name, mapping=lastupddttm_dict)
 
-            end = time.time()
+            # end = time.time()
             # self.logger().info("log quote spent time: %s" % (end - start))
-            self.r.hset(self.log_cache_name, self.INSTANCE_NAME, (end - start))
-            self.r.hset(self.heartbeat_cache_name, self.INSTANCE_NAME, datetime.utcnow().timestamp())
+            # self.r.hset(self.log_cache_name, self.INSTANCE_NAME, (end - start))
+            # self.r.hset(self.heartbeat_cache_name, self.INSTANCE_NAME, datetime.utcnow().timestamp())
+
 
             # start = time.time()
             # self.logger().info("len(trade_list): %s" % len(self.trade_list))
