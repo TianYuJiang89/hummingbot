@@ -14,7 +14,7 @@ from hummingbot.core.rate_oracle.rate_oracle import RateOracle
 from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
 
 import redis
-import json
+import orjson as json
 
 class SimpleDataRecorder(ScriptStrategyBase):
     """
