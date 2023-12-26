@@ -1,7 +1,7 @@
 import functools
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 import numpy as np
@@ -173,12 +173,12 @@ class SimpleDataRecorder(ScriptStrategyBase):
                         avg_ask = ask_result.result_volume / ask_result.query_volume
                         p["ap%s" % _] = float(avg_ask)
 
-                    p["time"] = float(datetime.utcnow().timestamp())
+                    p["time"] = float(datetime.now(tz=timezone.utc).timestamp())
 
                     # quote_list.append(p)
                     key = json.dumps((connector_name, asset))
                     quote_dict[key] = json.dumps(p)
-                    lastupddttm_dict[key] = datetime.utcnow().timestamp()
+                    lastupddttm_dict[key] = datetime.now(tz=timezone.utc).timestamp()
 
             # self.r.hset(self.data_cache_name, self.INSTANCE_NAME, json.dumps(quote_list, default=str))
             self.r.hset(self.data_cache_name, mapping=quote_dict)
