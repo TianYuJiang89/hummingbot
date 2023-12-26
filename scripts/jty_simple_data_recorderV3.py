@@ -32,6 +32,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
     data_cache_name = "data_cache"
     log_cache_name = "spend_time"
     heartbeat_cache_name = "lastupddttm"
+    trade_listener_heartbeat_cache_name = "trade_listener_lastupddttm"
 
     pool = redis.ConnectionPool(host=redis_host, port=redis_port, decode_responses=True)
     r = redis.Redis(connection_pool=pool)
@@ -67,6 +68,8 @@ class SimpleDataRecorder(ScriptStrategyBase):
 
     # quote currency conversion rate
     quote_conversion_rate_dict = {asset.split("-")[1]: None for connector_name, assets in markets.items() for asset in assets}
+
+    has_trade_listener_run = False
 
     ######################################################################################################
     # End: Internal variables
@@ -179,20 +182,10 @@ class SimpleDataRecorder(ScriptStrategyBase):
             # self.r.hset(self.data_cache_name, self.INSTANCE_NAME, json.dumps(quote_list, default=str))
             self.r.hset(self.data_cache_name, mapping=quote_dict)
             self.r.hset(self.heartbeat_cache_name, mapping=lastupddttm_dict)
+            if self.has_trade_listener_run:
+                self.r.hset(self.trade_listener_heartbeat_cache_name, mapping=lastupddttm_dict)
+            self.has_trade_listener_run = False
 
-            # end = time.time()
-            # self.logger().info("log quote spent time: %s" % (end - start))
-            # self.r.hset(self.log_cache_name, self.INSTANCE_NAME, (end - start))
-            # self.r.hset(self.heartbeat_cache_name, self.INSTANCE_NAME, datetime.utcnow().timestamp())
-
-
-            # start = time.time()
-            # self.logger().info("len(trade_list): %s" % len(self.trade_list))
-            # with self.client.write_api(write_options=SYNCHRONOUS) as write_api:
-            #     write_api.write(bucket=self.bucket, record=self.trade_list, org=self.org)
-            # self.trade_list = []
-            # end = time.time()
-            # self.logger().info("log trade spent time: %s" % (end - start))
 
     def refresh_conversion_rate_dict(self):
         for quote_asset in self.quote_conversion_rate_dict:
@@ -263,15 +256,4 @@ class SimpleDataRecorder(ScriptStrategyBase):
         # so, let caculate the Numerator first
         self.vwap_numerator_dict[(connector_name, asset)] = self.vwap_numerator_dict[(connector_name, asset)] + price * amount
 
-        # record trades
-        # p = Point("trades")
-        # p.tag("exchange", connector_name)
-        # p.tag("ticker", asset)
-        # p.field("timestamp", timestamp)
-        # p.field("type", type_name)
-        # p.field("price", price)
-        # p.field("amount", amount)
-        # p.field("is_taker", is_taker)
-        # p.time(datetime.utcnow(), WritePrecision.NS)
-        #
-        # self.trade_list.append(p)
+        self.has_trade_listener_run = True
