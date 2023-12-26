@@ -69,8 +69,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
     # quote currency conversion rate
     quote_conversion_rate_dict = {asset.split("-")[1]: None for connector_name, assets in markets.items() for asset in assets}
 
-    async_var_dict = dict()
-    async_var_dict["has_trade_listener_run"] = False
+    has_trade_listener_run = False
 
     ######################################################################################################
     # End: Internal variables
@@ -183,9 +182,9 @@ class SimpleDataRecorder(ScriptStrategyBase):
             # self.r.hset(self.data_cache_name, self.INSTANCE_NAME, json.dumps(quote_list, default=str))
             self.r.hset(self.data_cache_name, mapping=quote_dict)
             self.r.hset(self.heartbeat_cache_name, mapping=lastupddttm_dict)
-            if self.async_var_dict["has_trade_listener_run"]:
+            if self.has_trade_listener_run:
                 self.r.hset(self.trade_listener_heartbeat_cache_name, mapping=lastupddttm_dict)
-            self.async_var_dict["has_trade_listener_run"] = False
+            self.has_trade_listener_run = False
 
 
     def refresh_conversion_rate_dict(self):
@@ -257,4 +256,4 @@ class SimpleDataRecorder(ScriptStrategyBase):
         # so, let caculate the Numerator first
         self.vwap_numerator_dict[(connector_name, asset)] = self.vwap_numerator_dict[(connector_name, asset)] + price * amount
 
-        self.async_var_dict["has_trade_listener_run"] = True
+        self.has_trade_listener_run = True
