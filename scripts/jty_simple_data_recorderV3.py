@@ -69,7 +69,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
     # quote currency conversion rate
     quote_conversion_rate_dict = {asset.split("-")[1]: None for connector_name, assets in markets.items() for asset in assets}
 
-    has_trade_listener_run = False
+    has_trade_listener_run_dict = {(connector_name, asset): False for connector_name, assets in markets.items() for asset in assets}
 
     ######################################################################################################
     # End: Internal variables
@@ -125,6 +125,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
             # quote_list = []
             quote_dict = dict()
             lastupddttm_dict = dict()
+            trade_lastupddttm_dict = dict()
             for connector_name, connector in self.connectors.items():
                 for asset in connector.trading_pairs:
                     base_asset, quote_asset = asset.split("-")
@@ -172,19 +173,21 @@ class SimpleDataRecorder(ScriptStrategyBase):
                         avg_ask = ask_result.result_volume / ask_result.query_volume
                         p["ap%s" % _] = float(avg_ask)
 
-                    p["time"] = float(datetime.now(tz=timezone.utc).timestamp())
+                    utcnow_stamp = datetime.now(tz=timezone.utc).timestamp()
+                    p["time"] = float(utcnow_stamp)
 
                     # quote_list.append(p)
                     key = json.dumps((connector_name, asset))
                     quote_dict[key] = json.dumps(p)
-                    lastupddttm_dict[key] = datetime.now(tz=timezone.utc).timestamp()
+                    lastupddttm_dict[key] = utcnow_stamp
+                    if self.has_trade_listener_run_dict[(connector_name, asset)]:
+                        trade_lastupddttm_dict[key] = utcnow_stamp
+                        self.has_trade_listener_run_dict[(connector_name, asset)] = False
 
             # self.r.hset(self.data_cache_name, self.INSTANCE_NAME, json.dumps(quote_list, default=str))
             self.r.hset(self.data_cache_name, mapping=quote_dict)
             self.r.hset(self.heartbeat_cache_name, mapping=lastupddttm_dict)
-            if self.has_trade_listener_run:
-                self.r.hset(self.trade_listener_heartbeat_cache_name, mapping=lastupddttm_dict)
-            self.has_trade_listener_run = False
+            self.r.hset(self.trade_listener_heartbeat_cache_name, mapping=trade_lastupddttm_dict)
 
 
     def refresh_conversion_rate_dict(self):
@@ -256,4 +259,4 @@ class SimpleDataRecorder(ScriptStrategyBase):
         # so, let caculate the Numerator first
         self.vwap_numerator_dict[(connector_name, asset)] = self.vwap_numerator_dict[(connector_name, asset)] + price * amount
 
-        self.has_trade_listener_run = True
+        self.has_trade_listener_run_dict[(connector_name, asset)] = True
