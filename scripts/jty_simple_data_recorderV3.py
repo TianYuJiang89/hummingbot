@@ -69,8 +69,10 @@ class SimpleDataRecorder(ScriptStrategyBase):
     # quote currency conversion rate
     quote_conversion_rate_dict = {asset.split("-")[1]: None for connector_name, assets in markets.items() for asset in assets}
 
+    # to trace the trade processor heartbeat
     has_trade_listener_run_dict = {(connector_name, asset): False for connector_name, assets in markets.items() for asset in assets}
-
+    # to check if the orderbook re-init, if it is, then re-sub the trade processor function
+    order_book_id_dict = {(connector_name, asset): None for connector_name, assets in markets.items() for asset in assets}
     ######################################################################################################
     # End: Internal variables
     ######################################################################################################
@@ -190,6 +192,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
             if len(trade_lastupddttm_dict) > 0:
                 self.r.hset(self.trade_listener_heartbeat_cache_name, mapping=trade_lastupddttm_dict)
 
+            self.subscribe_to_order_book_trade_event()
 
     def refresh_conversion_rate_dict(self):
         for quote_asset in self.quote_conversion_rate_dict:
@@ -215,24 +218,24 @@ class SimpleDataRecorder(ScriptStrategyBase):
         """
         Subscribe to raw trade event.
         """
-        '''
         for connector_name, connector in self.connectors.items():
-            for order_book_name, order_book in connector.order_books.items():
-                setattr(self, f"_partial_process_public_trade_{connector_name}_{order_book_name}",
-                        functools.partial(self._process_public_trade, connector_name=connector_name))
-                setattr(self, f"_trade_event_forwarder_{connector_name}_{order_book_name}", SourceInfoEventForwarder(
-                    getattr(self, f"_partial_process_public_trade_{connector_name}_{order_book_name}")))
-                order_book.add_listener(OrderBookEvent.TradeEvent,
-                                        getattr(self, f"_trade_event_forwarder_{connector_name}_{order_book_name}"))
-        '''
-        for connector_name, connector in self.connectors.items():
-            setattr(self, f"_partial_process_public_trade_{connector_name}",
+            partial_func_name = f"_partial_process_public_trade_{connector_name}"
+            forwarder_func_name = f"_trade_event_forwarder_{connector_name}"
+            if not hasattr(self, partial_func_name):
+                setattr(self, partial_func_name,
                     functools.partial(self._process_public_trade, connector_name=connector_name))
-            setattr(self, f"_trade_event_forwarder_{connector_name}", SourceInfoEventForwarder(
-                getattr(self, f"_partial_process_public_trade_{connector_name}")))
+            if not hasattr(self, forwarder_func_name):
+                setattr(self, forwarder_func_name, SourceInfoEventForwarder(
+                    getattr(self, partial_func_name)))
             for order_book_name, order_book in connector.order_books.items():
-                order_book.add_listener(OrderBookEvent.TradeEvent,
-                                        getattr(self, f"_trade_event_forwarder_{connector_name}"))
+                old_order_book_id = self.order_book_id_dict[(connector_name, order_book_name)]
+                new_order_book_id = id(order_book)
+                if old_order_book_id is None or new_order_book_id != old_order_book_id:
+                    order_book.add_listener(OrderBookEvent.TradeEvent,
+                                        getattr(self, forwarder_func_name))
+                    self.order_book_id_dict[(connector_name, order_book_name)] = new_order_book_id
+                    self.logger().info(f"Subscribe to raw trade event for {order_book_name}. completed.")
+
         self.subscribed_to_order_book_trade_event = True
 
     def _process_public_trade(self, event_tag: int, order_book: OrderBook, event: OrderBookTradeEvent,
