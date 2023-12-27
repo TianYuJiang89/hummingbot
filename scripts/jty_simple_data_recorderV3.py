@@ -187,7 +187,8 @@ class SimpleDataRecorder(ScriptStrategyBase):
             # self.r.hset(self.data_cache_name, self.INSTANCE_NAME, json.dumps(quote_list, default=str))
             self.r.hset(self.data_cache_name, mapping=quote_dict)
             self.r.hset(self.heartbeat_cache_name, mapping=lastupddttm_dict)
-            self.r.hset(self.trade_listener_heartbeat_cache_name, mapping=trade_lastupddttm_dict)
+            if len(trade_lastupddttm_dict) > 0:
+                self.r.hset(self.trade_listener_heartbeat_cache_name, mapping=trade_lastupddttm_dict)
 
 
     def refresh_conversion_rate_dict(self):
