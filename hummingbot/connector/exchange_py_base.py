@@ -167,6 +167,8 @@ class ExchangePyBase(ExchangeBase, ABC):
 
     @property
     def status_dict(self) -> Dict[str, bool]:
+        # Begin Add By Tianyu 20230907
+        '''
         return {
             "symbols_mapping_initialized": self.trading_pair_symbol_map_ready(),
             "order_books_initialized": self.order_book_tracker.ready,
@@ -174,6 +176,15 @@ class ExchangePyBase(ExchangeBase, ABC):
             "trading_rule_initialized": len(self._trading_rules) > 0 if self.is_trading_required else True,
             "user_stream_initialized": self._is_user_stream_initialized(),
         }
+        '''
+        return {
+            "symbols_mapping_initialized": self.trading_pair_symbol_map_ready(),
+            "order_books_initialized": self.is_trading_required or self.order_book_tracker.ready,
+            "account_balance": not self.is_trading_required or len(self._account_balances) > 0,
+            "trading_rule_initialized": len(self._trading_rules) > 0 if self.is_trading_required else True,
+            "user_stream_initialized": self._is_user_stream_initialized(),
+        }
+        # End Add By Tianyu 20230907
 
     @property
     def ready(self) -> bool:
