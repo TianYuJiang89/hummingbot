@@ -1,8 +1,11 @@
 from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
 class TestAcountInfo(ScriptStrategyBase):
 
+    # gate_io_paper_trade
+    # binance_perpetual
+
     markets = {
-        "binance_perpetual": [
+        "gate_io_paper_trade": [
             "BTC-USDT"
         ]
     }
