@@ -3,9 +3,10 @@ class TestAcountInfo(ScriptStrategyBase):
 
     # gate_io_paper_trade
     # binance_perpetual
+    # binance
 
     markets = {
-        "binance_perpetual": [
+        "binance": [
             "BTC-USDT"
         ]
     }
