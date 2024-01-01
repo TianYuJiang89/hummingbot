@@ -63,13 +63,13 @@ class TestAcountInfo(ScriptStrategyBase):
             #     price=Decimal(50000)
             # )
 
-            self.sell(
-                connector_name=self.test_exchange,
-                trading_pair="BTC-USDT",
-                amount=Decimal(0.012),
-                order_type=OrderType.LIMIT,
-                price=Decimal(40000)
-            )
+            # self.sell(
+            #     connector_name=self.test_exchange,
+            #     trading_pair="BTC-USDT",
+            #     amount=Decimal(0.012),
+            #     order_type=OrderType.LIMIT,
+            #     price=Decimal(40000)
+            # )
 
             self.buy(
                 connector_name=self.test_exchange,
@@ -101,20 +101,26 @@ class TestAcountInfo(ScriptStrategyBase):
         columns = ["Exchange", "Market", "Side", "Price", "Amount", "Age"]
         data = []
         for connector_name, connector in self.connectors.items():
-            for order in self.get_active_orders(connector_name):
-                age_txt = "n/a" if order.age() <= 0. else pd.Timestamp(order.age(), unit='s').strftime('%H:%M:%S')
-                data.append([
-                    connector_name,
-                    order.trading_pair,
-                    "buy" if order.is_buy else "sell",
-                    float(order.price),
-                    float(order.quantity),
-                    age_txt
-                ])
+            # for order in self.get_active_orders(connector_name):
+            #     age_txt = "n/a" if order.age() <= 0. else pd.Timestamp(order.age(), unit='s').strftime('%H:%M:%S')
+            #     data.append([
+            #         connector_name,
+            #         order.trading_pair,
+            #         "buy" if order.is_buy else "sell",
+            #         float(order.price),
+            #         float(order.quantity),
+            #         age_txt
+            #     ])
+            data.extend(self.get_active_orders(connector_name))
+
         # if not data:
         #     raise ValueError
-        df = pd.DataFrame(data=data, columns=columns)
-        df.sort_values(by=["Exchange", "Market", "Side"], inplace=True)
+        # df = pd.DataFrame(data=data, columns=columns)
+        # df.sort_values(by=["Exchange", "Market", "Side"], inplace=True)
+
+        df = pd.DataFrame(data=data)
+
+
         return df
 
     def active_positions_df(self) -> pd.DataFrame:
