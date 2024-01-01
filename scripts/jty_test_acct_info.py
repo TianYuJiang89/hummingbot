@@ -1,6 +1,8 @@
 from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
 from hummingbot.core.data_type.common import OrderType
+from hummingbot.connector.derivative.position import Position
 
+from typing import Dict, List
 from decimal import Decimal
 import pandas as pd
 
@@ -32,7 +34,7 @@ class TestAcountInfo(ScriptStrategyBase):
         balance_df = self.get_balance_df()
         if True:
             self.logger().info("\nbalance_df=")
-            self.logger().info(balance_df)
+            self.logger().info(f"\n{balance_df}")
             # self.logger().info(balance_df.to_json(orient="records"))
 
 
@@ -40,17 +42,24 @@ class TestAcountInfo(ScriptStrategyBase):
         active_orders_df = self.active_orders_df()
         if True:
             self.logger().info("\nactive_orders_df=")
-            self.logger().info(active_orders_df)
+            self.logger().info(f"\n{active_orders_df}")
             # self.logger().info(active_orders_df.to_json(orient="records"))
 
+        #: check active position
+        active_positions = self.active_positions
+        if True:
+            self.logger().info("\nactive_positions=")
+            self.logger().info(f"\n{active_positions}")
+            #
+
         if not self.had_buy:
-            self.buy(
-                connector_name="binance_perpetual_testnet",
-                trading_pair="BTC-USDT",
-                amount=Decimal(0.003),
-                order_type=OrderType.LIMIT,
-                price=Decimal(50000)
-            )
+            # self.buy(
+            #     connector_name="binance_perpetual_testnet",
+            #     trading_pair="BTC-USDT",
+            #     amount=Decimal(0.003),
+            #     order_type=OrderType.LIMIT,
+            #     price=Decimal(50000)
+            # )
 
             self.buy(
                 connector_name="binance_perpetual_testnet",
@@ -97,3 +106,7 @@ class TestAcountInfo(ScriptStrategyBase):
         df = pd.DataFrame(data=data, columns=columns)
         df.sort_values(by=["Exchange", "Market", "Side"], inplace=True)
         return df
+
+    @property
+    def active_positions(self) -> Dict[str, Position]:
+        return self._market_info.market.account_positions
