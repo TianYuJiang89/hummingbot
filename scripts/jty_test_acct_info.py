@@ -54,7 +54,7 @@ class TestAcountInfo(ScriptStrategyBase):
 
         if not self.had_buy:
             self.buy(
-                connector_name="binance_perpetual_testnet",
+                connector_name="binance_perpetual",
                 trading_pair="BTC-USDT",
                 amount=Decimal(0.003),
                 order_type=OrderType.LIMIT,
@@ -62,7 +62,7 @@ class TestAcountInfo(ScriptStrategyBase):
             )
 
             self.buy(
-                connector_name="binance_perpetual_testnet",
+                connector_name="binance_perpetual",
                 trading_pair="BTC-USDT",
                 amount=Decimal(0.003),
                 order_type=OrderType.LIMIT,
