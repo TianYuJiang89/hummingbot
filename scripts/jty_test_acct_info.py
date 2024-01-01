@@ -29,3 +29,6 @@ class TestAcountInfo(ScriptStrategyBase):
 
                 order_size = connector.get_order_size_quantum(asset, None)
                 self.logger().info(f"order_size= {order_size}")
+
+                min_notional_size = connector.trading_rules[asset].min_notional_size
+                self.logger().info(f"min_notional_size= {min_notional_size}")
