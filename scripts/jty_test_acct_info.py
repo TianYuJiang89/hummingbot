@@ -45,12 +45,21 @@ class TestAcountInfo(ScriptStrategyBase):
 
         if not self.had_buy:
             self.buy(
-                connector_name="kucoin_paper_trade",
+                connector_name="binance_perpetual_testnet",
                 trading_pair="BTC-USDT",
                 amount=Decimal(0.003),
                 order_type=OrderType.LIMIT,
                 price=Decimal(50000)
             )
+
+            self.buy(
+                connector_name="binance_perpetual_testnet",
+                trading_pair="BTC-USDT",
+                amount=Decimal(0.003),
+                order_type=OrderType.LIMIT,
+                price=Decimal(30000)
+            )
+
             self.had_buy = True
 
 
