@@ -10,6 +10,8 @@ class TestAcountInfo(ScriptStrategyBase):
             "BTC-USDT",
             #"ETH-USDT",
             #"ETH-BTC",
+            "XRP-USDT",
+            "TRX-USDT",
         ]
     }
 
