@@ -66,7 +66,7 @@ class TestAcountInfo(ScriptStrategyBase):
             self.buy(
                 connector_name=self.test_exchange,
                 trading_pair="BTC-USDT",
-                amount=Decimal(0.003),
+                amount=Decimal(0.007),
                 order_type=OrderType.LIMIT,
                 price=Decimal(30000)
             )
