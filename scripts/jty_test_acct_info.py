@@ -46,10 +46,10 @@ class TestAcountInfo(ScriptStrategyBase):
             # self.logger().info(active_orders_df.to_json(orient="records"))
 
         #: check active position
-        active_positions = self.active_positions
+        active_positions_df = self.active_positions_df()
         if True:
-            self.logger().info("\nactive_positions=")
-            self.logger().info(f"\n{active_positions}")
+            self.logger().info("\nactive_positions_df=")
+            self.logger().info(f"\n{active_positions_df}")
             #
 
         if not self.had_buy:
@@ -107,6 +107,21 @@ class TestAcountInfo(ScriptStrategyBase):
         df.sort_values(by=["Exchange", "Market", "Side"], inplace=True)
         return df
 
-    @property
-    def active_positions(self) -> Dict[str, Position]:
-        return self._market_info.market.account_positions
+    def active_positions_df(self) -> pd.DataFrame:
+        columns = ["Symbol", "Type", "Entry Price", "Amount", "Leverage", "Unrealized PnL"]
+        data = []
+        market, trading_pair = self._market_info.market, self._market_info.trading_pair
+        for idx in self.active_positions.values():
+            is_buy = True if idx.amount > 0 else False
+            unrealized_profit = ((market.get_price(trading_pair, is_buy) - idx.entry_price) * idx.amount)
+            data.append([
+                idx.trading_pair,
+                idx.position_side.name,
+                idx.entry_price,
+                idx.amount,
+                idx.leverage,
+                unrealized_profit
+            ])
+
+        return pd.DataFrame(data=data, columns=columns)
+
