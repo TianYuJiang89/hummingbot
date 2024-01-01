@@ -14,7 +14,7 @@ class TestAcountInfo(ScriptStrategyBase):
     # binance_perpetual_paper_trade
     # binance_perpetual_testnet
     markets = {
-        "binance_perpetual_testnet": [
+        "binance_perpetual": [
             "BTC-USDT",
             #"ETH-USDT",
             #"ETH-BTC",
@@ -53,13 +53,13 @@ class TestAcountInfo(ScriptStrategyBase):
             #
 
         if not self.had_buy:
-            # self.buy(
-            #     connector_name="binance_perpetual_testnet",
-            #     trading_pair="BTC-USDT",
-            #     amount=Decimal(0.003),
-            #     order_type=OrderType.LIMIT,
-            #     price=Decimal(50000)
-            # )
+            self.buy(
+                connector_name="binance_perpetual_testnet",
+                trading_pair="BTC-USDT",
+                amount=Decimal(0.003),
+                order_type=OrderType.LIMIT,
+                price=Decimal(50000)
+            )
 
             self.buy(
                 connector_name="binance_perpetual_testnet",
