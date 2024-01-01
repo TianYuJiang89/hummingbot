@@ -47,12 +47,11 @@ class TestAcountInfo(ScriptStrategyBase):
             # self.logger().info(active_orders_df.to_json(orient="records"))
 
         #: check active position
-        self.active_positions_df()
-        # active_positions_df = self.active_positions_df()
-        # if True:
-        #     self.logger().info("\nactive_positions_df=")
-        #     self.logger().info(f"\n{active_positions_df}")
-        #     #
+        active_positions_df = self.active_positions_df()
+        if True:
+            self.logger().info("\nactive_positions_df=")
+            self.logger().info(f"\n{active_positions_df}")
+            # self.logger().info(active_positions_df.to_json(orient="records"))
 
         if not self.had_buy:
             # self.buy(
@@ -98,54 +97,43 @@ class TestAcountInfo(ScriptStrategyBase):
         """
         Return a data frame of all active orders for displaying purpose.
         """
-        columns = ["Exchange", "Market", "Side", "Price", "Amount", "Age"]
+        columns = ["exchange", "ticker", "side", "price", "amount", "age"]
         data = []
         for connector_name, connector in self.connectors.items():
-            # for order in self.get_active_orders(connector_name):
-            #     age_txt = "n/a" if order.age() <= 0. else pd.Timestamp(order.age(), unit='s').strftime('%H:%M:%S')
-            #     data.append([
-            #         connector_name,
-            #         order.trading_pair,
-            #         "buy" if order.is_buy else "sell",
-            #         float(order.price),
-            #         float(order.quantity),
-            #         age_txt
-            #     ])
-            data.extend(self.get_active_orders(connector_name))
+            for order in self.get_active_orders(connector_name):
+                age_txt = "n/a" if order.age() <= 0. else pd.Timestamp(order.age(), unit='s').strftime('%H:%M:%S')
+                data.append([
+                    connector_name,
+                    order.trading_pair,
+                    "buy" if order.is_buy else "sell",
+                    float(order.price),
+                    float(order.quantity),
+                    age_txt
+                ])
 
         # if not data:
         #     raise ValueError
-        # df = pd.DataFrame(data=data, columns=columns)
-        # df.sort_values(by=["Exchange", "Market", "Side"], inplace=True)
-
-        df = pd.DataFrame(data=data)
-
+        df = pd.DataFrame(data=data, columns=columns)
+        df.sort_values(by=["exchange", "ticker", "side"], inplace=True)
 
         return df
 
     def active_positions_df(self) -> pd.DataFrame:
+        columns = ["exchange", "ticker", "price", "amount", "leverage", "unrealized_pnl"]
+        data = []
         for connector_name, connector in self.connectors.items():
-            self.logger().info("\naccount_positions=")
-            self.logger().info(f"\n{connector.account_positions}")
-            # for connector.account_positions.items():
+            for position in connector.account_positions.values():
+                data.append([
+                    connector_name,
+                    position.trading_pair,
+                    position.entry_price,
+                    position.amount,
+                    position.leverage,
+                    position.unrealized_pnl,
+                ])
 
-        # pass
-        # account_positions
+        df = pd.DataFrame(data=data, columns=columns)
+        df.sort_values(by=["exchange", "ticker"], inplace=True)
 
-        # columns = ["Symbol", "Type", "Entry Price", "Amount", "Leverage", "Unrealized PnL"]
-        # data = []
-        # market, trading_pair = self._market_info.market, self._market_info.trading_pair
-        # for idx in self.active_positions.values():
-        #     is_buy = True if idx.amount > 0 else False
-        #     unrealized_profit = ((market.get_price(trading_pair, is_buy) - idx.entry_price) * idx.amount)
-        #     data.append([
-        #         idx.trading_pair,
-        #         idx.position_side.name,
-        #         idx.entry_price,
-        #         idx.amount,
-        #         idx.leverage,
-        #         unrealized_profit
-        #     ])
-        #
-        # return pd.DataFrame(data=data, columns=columns)
+        return df
 
