@@ -6,8 +6,10 @@ class TestAcountInfo(ScriptStrategyBase):
     # binance
     # binance_perpetual_paper_trade
     markets = {
-        "binance_perpetual_paper_trade": [
-            "BTC-USDT"
+        "binance_perpetual": [
+            "BTC-USDT",
+            "ETH_USDT",
+            "ETH-BTC",
         ]
     }
 
