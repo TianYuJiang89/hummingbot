@@ -1,5 +1,7 @@
 from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
+from hummingbot.core.data_type.common import OrderType
 
+from decimal import Decimal
 import pandas as pd
 
 class TestAcountInfo(ScriptStrategyBase):
@@ -19,6 +21,8 @@ class TestAcountInfo(ScriptStrategyBase):
         ]
     }
 
+    had_buy = False
+
     def on_tick(self):
 
         if not self.ready_to_trade:
@@ -27,7 +31,7 @@ class TestAcountInfo(ScriptStrategyBase):
         #: check current balance of coins
         balance_df = self.get_balance_df()
         if True:
-            self.logger().info("balance_df=")
+            self.logger().info("\nbalance_df=")
             self.logger().info(balance_df)
             # self.logger().info(balance_df.to_json(orient="records"))
 
@@ -35,9 +39,19 @@ class TestAcountInfo(ScriptStrategyBase):
         #: check active orders
         active_orders_df = self.active_orders_df()
         if True:
-            self.logger().info("active_orders_df=")
+            self.logger().info("\nactive_orders_df=")
             self.logger().info(active_orders_df)
             # self.logger().info(active_orders_df.to_json(orient="records"))
+
+        if not self.had_buy:
+            self.buy(
+                connector_name="kucoin_paper_trade",
+                trading_pair="BTC-USDT",
+                amount=Decimal(0.003),
+                order_type=OrderType.LIMIT,
+                price=Decimal(50000)
+            )
+            self.had_buy = True
 
 
         for connector_name, connector in self.connectors.items():
