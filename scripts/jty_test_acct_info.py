@@ -8,8 +8,9 @@ class TestAcountInfo(ScriptStrategyBase):
     # binance_perpetual
     # binance
     # binance_perpetual_paper_trade
+    # binance_perpetual_testnet
     markets = {
-        "binance_perpetual": [
+        "binance_perpetual_testnet": [
             "BTC-USDT",
             #"ETH-USDT",
             #"ETH-BTC",
