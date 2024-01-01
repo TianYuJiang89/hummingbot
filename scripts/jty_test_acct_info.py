@@ -8,8 +8,8 @@ class TestAcountInfo(ScriptStrategyBase):
     markets = {
         "binance_perpetual": [
             "BTC-USDT",
-            "ETH-USDT",
-            "ETH-BTC",
+            #"ETH-USDT",
+            #"ETH-BTC",
         ]
     }
 
@@ -25,3 +25,5 @@ class TestAcountInfo(ScriptStrategyBase):
                 tick_size = connector.get_order_price_quantum(asset, None)
                 self.logger().info(f"tick_size= {tick_size}")
 
+                order_size = connector.get_order_size_quantum(asset, None)
+                self.logger().info(f"order_size= {order_size}")
