@@ -8,7 +8,7 @@ class TestAcountInfo(ScriptStrategyBase):
     markets = {
         "binance_perpetual": [
             "BTC-USDT",
-            "ETH_USDT",
+            "ETH-USDT",
             "ETH-BTC",
         ]
     }
