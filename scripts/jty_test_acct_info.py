@@ -55,12 +55,20 @@ class TestAcountInfo(ScriptStrategyBase):
         #     #
 
         if not self.had_buy:
-            self.buy(
+            # self.buy(
+            #     connector_name=self.test_exchange,
+            #     trading_pair="BTC-USDT",
+            #     amount=Decimal(0.003),
+            #     order_type=OrderType.LIMIT,
+            #     price=Decimal(50000)
+            # )
+
+            self.sell(
                 connector_name=self.test_exchange,
                 trading_pair="BTC-USDT",
-                amount=Decimal(0.003),
+                amount=Decimal(0.012),
                 order_type=OrderType.LIMIT,
-                price=Decimal(50000)
+                price=Decimal(40000)
             )
 
             self.buy(
