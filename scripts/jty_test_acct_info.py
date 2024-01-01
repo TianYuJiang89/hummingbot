@@ -15,7 +15,13 @@ class TestAcountInfo(ScriptStrategyBase):
 
     def on_tick(self):
         #: check current balance of coins
-        balance_df = self.get_balance_df()
+        # balance_df = self.get_balance_df()
+        # self.logger().info(f"Tbalance_df= {balance_df}")
 
-        self.logger().info(f"Tbalance_df= {balance_df}")
+        for connector_name, connector in self.connectors.items():
+            for asset in connector.trading_pairs:
+                self.logger().info(f"asset= {asset}")
+
+                tick_size = connector.get_order_price_quantum(asset, None)
+                self.logger().info(f"tick_size= {tick_size}")
 
