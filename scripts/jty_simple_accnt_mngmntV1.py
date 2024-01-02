@@ -81,6 +81,40 @@ class SimpleAccountManager(ScriptStrategyBase):
     def all_markets_ready(self):
         return all([market.ready for market in self.active_markets])
 
+    def get_balance_info(self):
+        """
+        Returns a data frame for all asset balances for displaying purpose.
+        """
+        data = []
+        for connector_name, connector in self.connectors.items():
+            for asset in self.get_assets(connector_name):
+                balance_dict = dict()
+                balance_dict["exchange"] = connector_name
+                balance_dict["ticker"] = asset
+                balance_dict["total_balance"] = float(connector.get_balance(asset))
+                balance_dict["available_balance"] = float(connector.get_available_balance(asset))
+                data.append(balance_dict)
+
+        return data
+
+
+
+    def get_balance_df(self) -> pd.DataFrame:
+        """
+        Returns a data frame for all asset balances for displaying purpose.
+        """
+        columns = ["exchange", "ticker", "total_balance", "available_balance"]
+        data = []
+        for connector_name, connector in self.connectors.items():
+            for asset in self.get_assets(connector_name):
+                data.append([connector_name,
+                             asset,
+                             float(connector.get_balance(asset)),
+                             float(connector.get_available_balance(asset))])
+        df = pd.DataFrame(data=data, columns=columns).replace(np.nan, '', regex=True)
+        df.sort_values(by=["exchange", "ticker"], inplace=True)
+        return df
+
     def active_orders_df(self) -> pd.DataFrame:
         """
         Return a data frame of all active orders for displaying purpose.
