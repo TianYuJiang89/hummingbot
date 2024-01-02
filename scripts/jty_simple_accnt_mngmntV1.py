@@ -15,7 +15,9 @@ class SimpleAccountManager(ScriptStrategyBase):
 
     config_cache_name = "instance_markets_cache" # to initialize the market variable
     cmd2acc_cache_name = "cmd2acc" # receive order instruction from commander script
-    cmd2acc_heartbeat_cache_name = "cmd2acc_lastupddttm" #
+    cmd2acc_heartbeat_cache_name = "cmd2acc_lastupddttm"
+    acc2cmd_cache_name = "acc2cmd"  # receive order instruction from commander script
+    acc2cmd_heartbeat_cache_name = "acc2cmd_lastupddttm"
 
 
     pool = redis.ConnectionPool(host=redis_host, port=redis_port, decode_responses=True)
@@ -29,7 +31,7 @@ class SimpleAccountManager(ScriptStrategyBase):
     # Begin: Account Manage Range Settings
     ######################################################################################################
     # To configure which exchange/ticker need to be record
-    # INSTANCE_NAME = "accnt_mngmnt" # os.getenv("CONFIG_INSTANCE_ID")
+    INSTANCE_NAME = "accnt_mngmnt_1" # os.getenv("CONFIG_INSTANCE_ID")
     # markets = json.loads(r.hget(config_cache_name, INSTANCE_NAME))
 
     test_exchange = "binance_perpetual_testnet"
@@ -73,6 +75,8 @@ class SimpleAccountManager(ScriptStrategyBase):
             # active positions info
             active_positions_df = self.active_positions_df()
             active_positions_dict = active_positions_df.to_json(orient="records")
+
+            # INSTANCE_NAME
 
     def all_markets_ready(self):
         return all([market.ready for market in self.active_markets])

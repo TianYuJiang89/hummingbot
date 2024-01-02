@@ -35,23 +35,24 @@ class TestAcountInfo(ScriptStrategyBase):
         balance_df = self.get_balance_df()
         if True:
             self.logger().info("\nbalance_df=")
-            self.logger().info(f"\n{balance_df}")
-            # self.logger().info(balance_df.to_json(orient="records"))
+            # self.logger().info(f"\n{balance_df}")
+            self.logger().info(balance_df.to_json(orient="records"))
+
 
 
         #: check active orders
         active_orders_df = self.active_orders_df()
         if True:
             self.logger().info("\nactive_orders_df=")
-            self.logger().info(f"\n{active_orders_df}")
-            # self.logger().info(active_orders_df.to_json(orient="records"))
+            # self.logger().info(f"\n{active_orders_df}")
+            self.logger().info(active_orders_df.to_json(orient="records"))
 
         #: check active position
         active_positions_df = self.active_positions_df()
         if True:
             self.logger().info("\nactive_positions_df=")
-            self.logger().info(f"\n{active_positions_df}")
-            # self.logger().info(active_positions_df.to_json(orient="records"))
+            # self.logger().info(f"\n{active_positions_df}")
+            self.logger().info(active_positions_df.to_json(orient="records"))
 
         if not self.had_buy:
             # self.buy(
