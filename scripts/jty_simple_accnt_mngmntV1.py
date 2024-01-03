@@ -1,3 +1,5 @@
+from hummingbot.core.data_type.limit_order import LimitOrder
+
 from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
 
 import os
@@ -54,27 +56,70 @@ class SimpleAccountManager(ScriptStrategyBase):
     ######################################################################################################
     _all_markets_ready = False
 
+    last_instruction_lastupddttm = 0.
     ######################################################################################################
     # End: Internal variables
     ######################################################################################################
 
     def on_tick(self):
-        if self._all_markets_ready == False:
+        if not self._all_markets_ready:
             self.logger().warning("Markets are not ready. No trades are permitted.")
             self._all_markets_ready = self.all_markets_ready()
         else:
+            ######################################################################################################
+            # Begin: Receive order instruction from commander script, and send order
+            ######################################################################################################
+            instruction_lastupddttm = self.r.hget(self.cmd2acc_heartbeat_cache_name, self.INSTANCE_NAME)
+            if self.last_instruction_lastupddttm != instruction_lastupddttm:
+                # batch cancel orders
+                # func:batch_order_cancel
 
+                # batch create orders
+                orders_to_create = []
+                instruction_list_dict = json.loads(self.r.hget(self.cmd2acc_cache_name, self.INSTANCE_NAME))
+                for connector_name, connector in self.connectors.items():
+                    instruction_list = instruction_list_dict[connector_name]
+                    for instruction in instruction_list:
+                        ticker = instruction["ticker"]
+                        is_buy = True if instruction["side"]=="B" else False
+                        base_ccy = instruction["base_ccy"]
+                        quote_ccy = instruction["quote_ccy"]
+                        price = instruction["price"]
+                        qty = instruction["qty"]
+                        order = LimitOrder(
+                            client_order_id="",
+                            trading_pair=ticker,
+                            is_buy=is_buy,
+                            base_currency=base_ccy,
+                            quote_currency=quote_ccy,
+                            price=price,
+                            quantity=qty,
+                        )
+                        orders_to_create.append(order)
+
+                    submitted_orders = connector.batch_order_create(
+                        orders_to_create=orders_to_create,
+                    )
+
+                self.last_instruction_lastupddttm = instruction_lastupddttm
+            ######################################################################################################
+            # End: Receive order instruction from commander script, and send order
+            ######################################################################################################
+
+            ######################################################################################################
+            # Begin: Send data to commander script
+            ######################################################################################################
             # account balance info
-            balance_df = self.get_balance_df()
-            balance_dict = balance_df.to_json(orient="records")
+            balance_data_list = self.get_balance_info()
 
             # active orders info
-            active_orders_df = self.active_orders_df()
-            active_orders_dict = active_orders_df.to_json(orient="records")
+            active_orders_data_list = self.get_active_orders_info()
 
             # active positions info
-            active_positions_df = self.active_positions_df()
-            active_positions_dict = active_positions_df.to_json(orient="records")
+            active_positions_data_list = self.get_active_positions_info()
+            ######################################################################################################
+            # End: Send data to commander script
+            ######################################################################################################
 
             # INSTANCE_NAME
 
@@ -85,74 +130,44 @@ class SimpleAccountManager(ScriptStrategyBase):
         """
         Returns a data frame for all asset balances for displaying purpose.
         """
-        data = []
+        data_list = []
         for connector_name, connector in self.connectors.items():
             for asset in self.get_assets(connector_name):
-                balance_dict = dict()
-                balance_dict["exchange"] = connector_name
-                balance_dict["ticker"] = asset
-                balance_dict["total_balance"] = float(connector.get_balance(asset))
-                balance_dict["available_balance"] = float(connector.get_available_balance(asset))
-                data.append(balance_dict)
+                data = dict()
+                data["exchange"] = connector_name
+                data["ticker"] = asset
+                data["total_balance"] = float(connector.get_balance(asset))
+                data["available_balance"] = float(connector.get_available_balance(asset))
+                data_list.append(data)
 
-        return data
+        return data_list
 
-
-
-    def get_balance_df(self) -> pd.DataFrame:
-        """
-        Returns a data frame for all asset balances for displaying purpose.
-        """
-        columns = ["exchange", "ticker", "total_balance", "available_balance"]
-        data = []
-        for connector_name, connector in self.connectors.items():
-            for asset in self.get_assets(connector_name):
-                data.append([connector_name,
-                             asset,
-                             float(connector.get_balance(asset)),
-                             float(connector.get_available_balance(asset))])
-        df = pd.DataFrame(data=data, columns=columns).replace(np.nan, '', regex=True)
-        df.sort_values(by=["exchange", "ticker"], inplace=True)
-        return df
-
-    def active_orders_df(self) -> pd.DataFrame:
-        """
-        Return a data frame of all active orders for displaying purpose.
-        """
-        columns = ["exchange", "ticker", "side", "price", "amount", "age"]
-        data = []
+    def get_active_orders_info(self):
+        data_list = []
         for connector_name, connector in self.connectors.items():
             for order in self.get_active_orders(connector_name):
-                age_txt = "n/a" if order.age() <= 0. else pd.Timestamp(order.age(), unit='s').strftime('%H:%M:%S')
-                data.append([
-                    connector_name,
-                    order.trading_pair,
-                    "buy" if order.is_buy else "sell",
-                    float(order.price),
-                    float(order.quantity),
-                    age_txt
-                ])
+                data = dict()
+                data["exchange"] = connector_name
+                data["ticker"] = order.trading_pair
+                data["side"] = "B" if order.is_buy else "S",
+                data["price"] = float(order.price)
+                data["qty"] = float(order.quantity)
+                data["age"] = float(order.age() )
+                data_list.append(data)
 
-        # if not data:
-        #     raise ValueError
-        df = pd.DataFrame(data=data, columns=columns)
-        df.sort_values(by=["exchange", "ticker", "side"], inplace=True)
+        return data_list
 
-    def active_positions_df(self) -> pd.DataFrame:
-        columns = ["exchange", "ticker", "price", "amount", "leverage", "unrealized_pnl"]
-        data = []
+    def get_active_positions_info(self):
+        data_list = []
         for connector_name, connector in self.connectors.items():
             for position in connector.account_positions.values():
-                data.append([
-                    connector_name,
-                    position.trading_pair,
-                    position.entry_price,
-                    position.amount,
-                    position.leverage,
-                    position.unrealized_pnl,
-                ])
+                data = dict()
+                data["exchange"] = connector_name
+                data["ticker"] = position.trading_pair
+                data["price"] = float(position.entry_price)
+                data["qty"] = float(position.amount)
+                data["leverage"] = float(position.leverage)
+                data["unrealized_pnl"] = float(position.unrealized_pnl)
+                data_list.append(data)
 
-        df = pd.DataFrame(data=data, columns=columns)
-        df.sort_values(by=["exchange", "ticker"], inplace=True)
-
-        return df
+        return data_list
