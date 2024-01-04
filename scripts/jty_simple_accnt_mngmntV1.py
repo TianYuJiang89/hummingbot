@@ -5,7 +5,8 @@ from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
 import os
 import redis
 import orjson as json
-import pandas as pd
+# import pandas as pd
+from datetime import datetime, timezone
 
 class SimpleAccountManager(ScriptStrategyBase):
     ######################################################################################################
@@ -72,13 +73,17 @@ class SimpleAccountManager(ScriptStrategyBase):
             instruction_lastupddttm = self.r.hget(self.cmd2acc_heartbeat_cache_name, self.INSTANCE_NAME)
             if self.last_instruction_lastupddttm != instruction_lastupddttm:
                 # batch cancel orders
-                # func:batch_order_cancel
+                for connector_name, connector in self.connectors.items():
+                    orders_to_cancel = self.get_active_orders(connector_name)
+                    connector.batch_order_cancel(
+                        orders_to_cancel=orders_to_cancel,
+                    )
 
                 # batch create orders
-                orders_to_create = []
                 instruction_list_dict = json.loads(self.r.hget(self.cmd2acc_cache_name, self.INSTANCE_NAME))
                 for connector_name, connector in self.connectors.items():
                     instruction_list = instruction_list_dict[connector_name]
+                    orders_to_create = []
                     for instruction in instruction_list:
                         ticker = instruction["ticker"]
                         is_buy = True if instruction["side"]=="B" else False
@@ -109,14 +114,23 @@ class SimpleAccountManager(ScriptStrategyBase):
             ######################################################################################################
             # Begin: Send data to commander script
             ######################################################################################################
+            acc_info = dict()
             # account balance info
             balance_data_list = self.get_balance_info()
+            acc_info["balance_data_list"] = balance_data_list
 
             # active orders info
             active_orders_data_list = self.get_active_orders_info()
+            acc_info["active_orders_data_list"] = active_orders_data_list
 
             # active positions info
             active_positions_data_list = self.get_active_positions_info()
+            acc_info["active_positions_data_list"] = active_positions_data_list
+
+            utcnow_stamp = datetime.now(tz=timezone.utc).timestamp()
+
+            self.r.hset(self.acc2cmd_cache_name, self.INSTANCE_NAME, json.dumps(acc_info))
+            self.r.hset(self.acc2cmd_heartbeat_cache_name, self.INSTANCE_NAME, utcnow_stamp)
             ######################################################################################################
             # End: Send data to commander script
             ######################################################################################################
