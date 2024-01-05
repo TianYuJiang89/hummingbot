@@ -142,6 +142,8 @@ class SimpleDataRecorder(ScriptStrategyBase):
                         vwap_numerator = self.vwap_numerator_dict[(connector_name, asset)]
                         vwap = vwap_numerator / qty
                     tick_size = connector.get_order_price_quantum(asset, None)
+                    order_size = connector.get_order_size_quantum(asset, None)
+                    min_notional_size = connector.trading_rules[asset].min_notional_size
                     if self.is_perpetual(connector_name):
                         funding_rate = connector.get_funding_info(asset).rate
                     else:
@@ -164,6 +166,8 @@ class SimpleDataRecorder(ScriptStrategyBase):
                     p["casv"] = cum_activate_sell_vol
                     p["vwap"] = vwap
                     p["ts"] = float(tick_size)
+                    p["os"] = float(order_size)
+                    p["mns"] = float(min_notional_size)
                     p["qcr"] = float(quote_conversion_rate)
                     p["funding_rate"] = float(funding_rate)
                     for _ in range(1, self.depth_lvl + 1):
