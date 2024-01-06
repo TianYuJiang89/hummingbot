@@ -132,7 +132,7 @@ class SimpleAccountManager(ScriptStrategyBase):
                                     quantity=qty,
                                 )
                                 orders_to_create.append(order)
-
+                                self.logger().info("order create!!!")
                             submitted_orders = connector.batch_order_create(
                                 orders_to_create=orders_to_create,
                             )
