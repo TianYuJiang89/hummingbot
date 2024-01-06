@@ -80,33 +80,64 @@ class SimpleAccountManager(ScriptStrategyBase):
                     )
 
                 # batch create orders
-                instruction_list_dict = json.loads(self.r.hget(self.cmd2acc_cache_name, self.INSTANCE_NAME))
-                for connector_name, connector in self.connectors.items():
-                    instruction_list = instruction_list_dict[connector_name]
-                    orders_to_create = []
-                    for instruction in instruction_list:
-                        ticker = instruction["ticker"]
-                        is_buy = True if instruction["side"]=="B" else False
-                        base_ccy = instruction["base_ccy"]
-                        quote_ccy = instruction["quote_ccy"]
-                        price = instruction["price"]
-                        qty = instruction["qty"]
-                        order = LimitOrder(
-                            client_order_id="",
-                            trading_pair=ticker,
-                            is_buy=is_buy,
-                            base_currency=base_ccy,
-                            quote_currency=quote_ccy,
-                            price=price,
-                            quantity=qty,
-                        )
-                        orders_to_create.append(order)
+                # instruction_list_dict sample
+                # {
+                #   'ready2trade': True,
+                #   'connector_instruction_list': {
+                #       'binance_perpetual_testnet': [
+                #           {
+                #               'ticker': 'BTC-USDT',
+                #               'side': 'B',
+                #               'base_ccy': 'BTC',
+                #               'quote_ccy': 'USDT',
+                #               'price': 30000.1,
+                #               'qty': 0.5
+                #           }
+                #       ],
+                #       'binance_perpetual': [
+                #           {
+                #               'ticker': 'ETH-USDT',
+                #               'side': 'S',
+                #               'base_ccy': 'ETH',
+                #               'quote_ccy': 'USDT',
+                #               'price': 4000.1,
+                #               'qty': 0.3
+                #           }
+                #       ]
+                #   }
+                # }
 
-                    submitted_orders = connector.batch_order_create(
-                        orders_to_create=orders_to_create,
-                    )
+                instruction_list_dict_str = self.r.hget(self.cmd2acc_cache_name, self.INSTANCE_NAME)
+                if instruction_list_dict_str is not None:
+                    instruction_list_dict = json.loads(instruction_list_dict_str)
+                    ready2trade = instruction_list_dict["ready2trade"]
+                    if ready2trade:
+                        for connector_name, connector in self.connectors.items():
+                            instruction_list = instruction_list_dict["connector_instruction_list"][connector_name]
+                            orders_to_create = []
+                            for instruction in instruction_list:
+                                ticker = instruction["ticker"]
+                                is_buy = True if instruction["side"]=="B" else False
+                                base_ccy = instruction["base_ccy"]
+                                quote_ccy = instruction["quote_ccy"]
+                                price = instruction["price"]
+                                qty = instruction["qty"]
+                                order = LimitOrder(
+                                    client_order_id="",
+                                    trading_pair=ticker,
+                                    is_buy=is_buy,
+                                    base_currency=base_ccy,
+                                    quote_currency=quote_ccy,
+                                    price=price,
+                                    quantity=qty,
+                                )
+                                orders_to_create.append(order)
 
-                self.last_instruction_lastupddttm = instruction_lastupddttm
+                            submitted_orders = connector.batch_order_create(
+                                orders_to_create=orders_to_create,
+                            )
+
+                        self.last_instruction_lastupddttm = instruction_lastupddttm
             ######################################################################################################
             # End: Receive order instruction from commander script, and send order
             ######################################################################################################
@@ -134,8 +165,6 @@ class SimpleAccountManager(ScriptStrategyBase):
             ######################################################################################################
             # End: Send data to commander script
             ######################################################################################################
-
-            # INSTANCE_NAME
 
     def all_markets_ready(self):
         return all([market.ready for market in self.active_markets])
