@@ -1,5 +1,6 @@
 from hummingbot.core.data_type.limit_order import LimitOrder
 
+from hummingbot.core.data_type.common import PositionAction
 from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
 
 import os
@@ -37,8 +38,8 @@ class SimpleAccountManager(ScriptStrategyBase):
     INSTANCE_NAME = "accnt_mngmnt_1" # os.getenv("CONFIG_INSTANCE_ID")
     # markets = json.loads(r.hget(config_cache_name, INSTANCE_NAME))
 
-    # test_exchange = "binance_perpetual_testnet"
-    test_exchange = "binance_perpetual"
+    test_exchange = "binance_perpetual_testnet"
+    # test_exchange = "binance_perpetual"
     markets = {
         test_exchange: [
             "BTC-USDT",
@@ -133,6 +134,7 @@ class SimpleAccountManager(ScriptStrategyBase):
                                     quote_currency=quote_ccy,
                                     price=price,
                                     quantity=qty,
+                                    position_action=PositionAction.OPEN,
                                 )
                                 orders_to_create.append(order)
                                 self.logger().info("order create!!!")
