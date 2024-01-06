@@ -112,7 +112,9 @@ class SimpleAccountManager(ScriptStrategyBase):
                     instruction_list_dict = json.loads(instruction_list_dict_str)
                     ready2trade = instruction_list_dict["ready2trade"]
                     if ready2trade:
+                        self.logger().info(f"ready2trade={ready2trade}")
                         for connector_name, connector in self.connectors.items():
+                            self.logger().info(f"iter_connector={connector_name}")
                             instruction_list = instruction_list_dict["connector_instruction_list"][connector_name]
                             orders_to_create = []
                             for instruction in instruction_list:
