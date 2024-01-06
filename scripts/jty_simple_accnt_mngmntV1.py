@@ -77,6 +77,8 @@ class SimpleAccountManager(ScriptStrategyBase):
             ######################################################################################################
             instruction_lastupddttm = self.r.hget(self.cmd2acc_heartbeat_cache_name, self.INSTANCE_NAME)
             if self.last_instruction_lastupddttm != instruction_lastupddttm:
+                self.last_instruction_lastupddttm = instruction_lastupddttm
+
                 # batch cancel orders
                 for connector_name, connector in self.connectors.items():
                     orders_to_cancel = self.get_active_orders(connector_name)
@@ -136,7 +138,7 @@ class SimpleAccountManager(ScriptStrategyBase):
                                         trading_pair=ticker,
                                         amount=Decimal(qty),
                                         order_type=OrderType.LIMIT,
-                                        price=price
+                                        price=Decimal(price)
                                     )
                                 else:
                                     self.sell(
@@ -144,7 +146,7 @@ class SimpleAccountManager(ScriptStrategyBase):
                                         trading_pair=ticker,
                                         amount=Decimal(qty),
                                         order_type=OrderType.LIMIT,
-                                        price=price
+                                        price=Decimal(price)
                                     )
 
                                 # order = LimitOrder(
@@ -162,7 +164,6 @@ class SimpleAccountManager(ScriptStrategyBase):
                             #     orders_to_create=orders_to_create,
                             # )
 
-                        self.last_instruction_lastupddttm = instruction_lastupddttm
             ######################################################################################################
             # End: Receive order instruction from commander script, and send order
             ######################################################################################################
