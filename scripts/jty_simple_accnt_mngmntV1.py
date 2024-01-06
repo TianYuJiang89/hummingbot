@@ -2,7 +2,8 @@ from hummingbot.core.data_type.limit_order import LimitOrder
 
 from hummingbot.core.data_type.common import PositionAction
 from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
-
+from hummingbot.core.data_type.common import OrderType
+from decimal import Decimal
 import os
 import redis
 import orjson as json
@@ -68,6 +69,8 @@ class SimpleAccountManager(ScriptStrategyBase):
         if not self._all_markets_ready:
             self.logger().warning("Markets are not ready. No trades are permitted.")
             self._all_markets_ready = self.all_markets_ready()
+            if self._all_markets_ready:
+                self.logger().warning("Markets are ready!!!")
         else:
             ######################################################################################################
             # Begin: Receive order instruction from commander script, and send order
@@ -114,33 +117,50 @@ class SimpleAccountManager(ScriptStrategyBase):
                     instruction_list_dict = json.loads(instruction_list_dict_str)
                     ready2trade = instruction_list_dict["ready2trade"]
                     if ready2trade:
-                        self.logger().info(f"ready2trade={ready2trade}")
+
                         for connector_name, connector in self.connectors.items():
-                            self.logger().info(f"iter_connector={connector_name}")
+
                             instruction_list = instruction_list_dict["connector_instruction_list"][connector_name]
-                            orders_to_create = []
+                            # orders_to_create = []
                             for instruction in instruction_list:
                                 ticker = instruction["ticker"]
                                 is_buy = True if instruction["side"]=="B" else False
-                                base_ccy = instruction["base_ccy"]
-                                quote_ccy = instruction["quote_ccy"]
+                                # base_ccy = instruction["base_ccy"]
+                                # quote_ccy = instruction["quote_ccy"]
                                 price = instruction["price"]
                                 qty = instruction["qty"]
-                                order = LimitOrder(
-                                    client_order_id="",
-                                    trading_pair=ticker,
-                                    is_buy=is_buy,
-                                    base_currency=base_ccy,
-                                    quote_currency=quote_ccy,
-                                    price=price,
-                                    quantity=qty,
-                                    position_action=PositionAction.OPEN,
-                                )
-                                orders_to_create.append(order)
-                                self.logger().info("order create!!!")
-                            submitted_orders = connector.batch_order_create(
-                                orders_to_create=orders_to_create,
-                            )
+
+                                if is_buy:
+                                    self.buy(
+                                        connector_name=connector_name,
+                                        trading_pair=ticker,
+                                        amount=Decimal(qty),
+                                        order_type=OrderType.LIMIT,
+                                        price=price
+                                    )
+                                else:
+                                    self.sell(
+                                        connector_name=connector_name,
+                                        trading_pair=ticker,
+                                        amount=Decimal(qty),
+                                        order_type=OrderType.LIMIT,
+                                        price=price
+                                    )
+
+                                # order = LimitOrder(
+                                #     client_order_id="",
+                                #     trading_pair=ticker,
+                                #     is_buy=is_buy,
+                                #     base_currency=base_ccy,
+                                #     quote_currency=quote_ccy,
+                                #     price=price,
+                                #     quantity=qty,
+                                # )
+                                # orders_to_create.append(order)
+
+                            # submitted_orders = connector.batch_order_create(
+                            #     orders_to_create=orders_to_create,
+                            # )
 
                         self.last_instruction_lastupddttm = instruction_lastupddttm
             ######################################################################################################
