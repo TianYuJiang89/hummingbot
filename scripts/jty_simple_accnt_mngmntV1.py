@@ -36,20 +36,9 @@ class SimpleAccountManager(ScriptStrategyBase):
     # Begin: Account Manage Range Settings
     ######################################################################################################
     # To configure which exchange/ticker need to be record
-    INSTANCE_NAME = "accnt_mngmnt_1" # os.getenv("CONFIG_INSTANCE_ID")
-    # markets = json.loads(r.hget(config_cache_name, INSTANCE_NAME))
-
-    test_exchange = "binance_perpetual_testnet"
-    # test_exchange = "binance_perpetual"
-    markets = {
-        test_exchange: [
-            "BTC-USDT",
-            # "ETH-USDT",
-            # "ETH-BTC",
-            "XRP-USDT",
-            "TRX-USDT",
-        ]
-    }
+    # INSTANCE_NAME = "accnt_mngmnt_1" # os.getenv("CONFIG_INSTANCE_ID")
+    INSTANCE_NAME = "accnt_mngmnt_testnet"
+    markets = json.loads(r.hget(config_cache_name, INSTANCE_NAME))
 
     ######################################################################################################
     # End: Account Manage Settings
