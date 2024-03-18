@@ -52,7 +52,10 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
         A dictionary of statuses of various exchange's components. Used to determine if the connector is ready
         """
         status_d = super().status_dict
-        status_d["funding_info"] = self._perpetual_trading.is_funding_info_initialized()
+        # Begin Modify by tianyu 20230907
+        # status_d["funding_info"] = self._perpetual_trading.is_funding_info_initialized()
+        status_d["funding_info"] = self.is_trading_required or self._perpetual_trading.is_funding_info_initialized()
+        # End Modify by tianyu 20230907
         return status_d
 
     @property
@@ -103,10 +106,10 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
             self._funding_fee_polling_task = safe_ensure_future(self._funding_payment_polling_loop())
         """
         if self.is_trading_required:
-            # self._funding_fee_polling_task = safe_ensure_future(self._funding_payment_polling_loop())
             pass
         else:
             self._funding_info_listener_task = safe_ensure_future(self._listen_for_funding_info())
+            self._funding_fee_polling_task = safe_ensure_future(self._funding_payment_polling_loop())
         # End Modify by tianyu 20230907
 
     def set_position_mode(self, mode: PositionMode):
