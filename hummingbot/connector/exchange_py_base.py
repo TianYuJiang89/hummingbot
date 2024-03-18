@@ -689,6 +689,9 @@ class ExchangePyBase(ExchangeBase, ABC):
             self._lost_orders_update_task = safe_ensure_future(self._lost_orders_update_polling_loop())
         """
         self._stop_network()
+        # begin test
+        self.order_book_tracker.start()
+        # end
         if self.is_trading_required:
             self._trading_rules_polling_task = safe_ensure_future(self._trading_rules_polling_loop())
             self._trading_fees_polling_task = safe_ensure_future(self._trading_fees_polling_loop())
@@ -697,7 +700,7 @@ class ExchangePyBase(ExchangeBase, ABC):
             self._user_stream_event_listener_task = safe_ensure_future(self._user_stream_event_listener())
             self._lost_orders_update_task = safe_ensure_future(self._lost_orders_update_polling_loop())
         else:
-            self.order_book_tracker.start()
+            # self.order_book_tracker.start()
             self._trading_rules_polling_task = safe_ensure_future(self._trading_rules_polling_loop())
         # End Modify by tianyu 20230907
 
