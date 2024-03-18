@@ -109,7 +109,7 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
             pass
         else:
             self._funding_info_listener_task = safe_ensure_future(self._listen_for_funding_info())
-            self._funding_fee_polling_task = safe_ensure_future(self._funding_payment_polling_loop())
+            # self._funding_fee_polling_task = safe_ensure_future(self._funding_payment_polling_loop())
         # End Modify by tianyu 20230907
 
     def set_position_mode(self, mode: PositionMode):
