@@ -109,6 +109,7 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
             pass
         else:
             self._funding_info_listener_task = safe_ensure_future(self._listen_for_funding_info())
+            # 下面这个函数用户作用是funding into轮询，每次会耗掉大量的api call，所以暂时注释掉
             # self._funding_fee_polling_task = safe_ensure_future(self._funding_payment_polling_loop())
         # End Modify by tianyu 20230907
 
