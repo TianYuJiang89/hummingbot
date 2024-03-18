@@ -11,10 +11,11 @@ class LogPricesExample(ScriptStrategyBase):
     """
     redis_host = "localhost"
     redis_port = 6379
-    config_cache_name = "test_instance_markets_cache"
+    # config_cache_name = "test_instance_markets_cache"
+    config_cache_name = "instance_markets_cache"
     pool = redis.ConnectionPool(host=redis_host, port=redis_port, decode_responses=True)
     r = redis.Redis(connection_pool=pool)
-    INSTANCE_NAME = os.getenv("INSTANCE_NAME")
+    INSTANCE_NAME = "binance_md_1" # os.getenv("INSTANCE_NAME")
     markets = json.loads(r.hget(config_cache_name, INSTANCE_NAME))
 
     def on_tick(self):
