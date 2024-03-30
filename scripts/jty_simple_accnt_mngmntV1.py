@@ -109,7 +109,7 @@ class SimpleAccountManager(ScriptStrategyBase):
                     instruction_list_dict = json.loads(instruction_list_dict_str)
                     ready2trade = instruction_list_dict["ready2trade"]
                     if ready2trade:
-
+                        self.logger().warning("Trading!!!")
                         for connector_name, connector in self.connectors.items():
 
                             instruction_list = instruction_list_dict["connector_instruction_list"][connector_name]
@@ -121,7 +121,7 @@ class SimpleAccountManager(ScriptStrategyBase):
                                 # quote_ccy = instruction["quote_ccy"]
                                 price = instruction["price"]
                                 qty = instruction["qty"]
-
+                                '''
                                 if is_buy:
                                     self.buy(
                                         connector_name=connector_name,
@@ -138,7 +138,7 @@ class SimpleAccountManager(ScriptStrategyBase):
                                         order_type=OrderType.LIMIT,
                                         price=Decimal(price)
                                     )
-
+                                '''
                                 # to avoid the 300 orders per 10s limit
                                 time.sleep(0.034)
 
