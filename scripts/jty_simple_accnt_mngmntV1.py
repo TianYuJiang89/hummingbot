@@ -121,7 +121,7 @@ class SimpleAccountManager(ScriptStrategyBase):
                                 # quote_ccy = instruction["quote_ccy"]
                                 price = instruction["price"]
                                 qty = instruction["qty"]
-                                '''
+
                                 if is_buy:
                                     self.buy(
                                         connector_name=connector_name,
@@ -138,7 +138,7 @@ class SimpleAccountManager(ScriptStrategyBase):
                                         order_type=OrderType.LIMIT,
                                         price=Decimal(price)
                                     )
-                                '''
+
                                 # to avoid the 300 orders per 10s limit
                                 time.sleep(0.034)
 
