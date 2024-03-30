@@ -9,6 +9,7 @@ import redis
 import orjson as json
 # import pandas as pd
 from datetime import datetime, timezone
+import time
 
 class SimpleAccountManager(ScriptStrategyBase):
     ######################################################################################################
@@ -137,6 +138,9 @@ class SimpleAccountManager(ScriptStrategyBase):
                                         order_type=OrderType.LIMIT,
                                         price=Decimal(price)
                                     )
+
+                                # to avoid the 300 orders per 10s limit
+                                time.sleep(0.034)
 
                                 # order = LimitOrder(
                                 #     client_order_id="",
