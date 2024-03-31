@@ -25,7 +25,6 @@ class SimpleAccountManager(ScriptStrategyBase):
     acc2cmd_cache_name = "acc2cmd"  # receive order instruction from commander script
     acc2cmd_heartbeat_cache_name = "acc2cmd_lastupddttm"
 
-
     pool = redis.ConnectionPool(host=redis_host, port=redis_port, decode_responses=True)
     r = redis.Redis(connection_pool=pool)
 
@@ -55,6 +54,21 @@ class SimpleAccountManager(ScriptStrategyBase):
     # End: Internal variables
     ######################################################################################################
 
+    ######################################################################################################
+    # Begin: order execution related variables
+    ######################################################################################################
+    orders_per_clock_time = 20 # per 3 sec
+    is_executing = False
+    executing_segment = 0
+    last_segment = 0
+
+    orders_to_cancel_dict = dict()
+    orders_to_exec_list_dict = dict()
+    ready2trade = False
+    ######################################################################################################
+    # End: order execution related variables
+    ######################################################################################################
+
     def on_tick(self):
         if not self._all_markets_ready:
             self.logger().warning("Markets are not ready. No trades are permitted.")
@@ -63,70 +77,90 @@ class SimpleAccountManager(ScriptStrategyBase):
                 self.logger().warning("Markets are ready!!!")
         else:
             ######################################################################################################
-            # Begin: Receive order instruction from commander script, and send order
+            # Begin: Receive order instruction from commander script, and save to temporary variables
             ######################################################################################################
             instruction_lastupddttm = self.r.hget(self.cmd2acc_heartbeat_cache_name, self.INSTANCE_NAME)
             if self.last_instruction_lastupddttm != instruction_lastupddttm:
                 self.last_instruction_lastupddttm = instruction_lastupddttm
 
-                # batch cancel orders
-                # for connector_name, connector in self.connectors.items():
-                #     orders_to_cancel = self.get_active_orders(connector_name)
-                #     connector.batch_order_cancel(
-                #         orders_to_cancel=orders_to_cancel,
-                #     )
+                orders_to_cancel_dict = dict()
+                for connector_name, connector in self.connectors.items():
+                    orders_to_cancel = self.get_active_orders(connector_name)
+                    orders_to_cancel_dict.update({(connector_name, order.trading_pair, order.is_buy): order.client_order_id for order in orders_to_cancel})
 
 
                 instruction_list_dict_str = self.r.hget(self.cmd2acc_cache_name, self.INSTANCE_NAME)
                 if instruction_list_dict_str is not None:
                     instruction_list_dict = json.loads(instruction_list_dict_str)
                     ready2trade = instruction_list_dict["ready2trade"]
-                    if ready2trade:
-                        self.logger().warning("Trading!!!")
-                        for connector_name, connector in self.connectors.items():
-                            orders_to_cancel = self.get_active_orders(connector_name)
-                            instruction_list = instruction_list_dict["connector_instruction_list"][connector_name]
-                            # orders_to_create = []
-                            for instruction in instruction_list:
-                                ticker = instruction["ticker"]
-                                is_buy = True if instruction["side"]=="B" else False
-                                # base_ccy = instruction["base_ccy"]
-                                # quote_ccy = instruction["quote_ccy"]
-                                price = instruction["price"]
-                                qty = instruction["qty"]
+                    self.ready2trade = ready2trade
 
-                                for order in orders_to_cancel:
-                                    if (order.trading_pair == ticker) and (order.is_buy==is_buy):
-                                        self.cancel(
-                                            connector_name=connector_name,
-                                            trading_pair=order.trading_pair,
-                                            order_id=order.client_order_id,
-                                        )
-                                        break
-
-                                if is_buy:
-                                    self.buy(
-                                        connector_name=connector_name,
-                                        trading_pair=ticker,
-                                        amount=Decimal(qty),
-                                        order_type=OrderType.LIMIT,
-                                        price=Decimal(price)
-                                    )
-                                else:
-                                    self.sell(
-                                        connector_name=connector_name,
-                                        trading_pair=ticker,
-                                        amount=Decimal(qty),
-                                        order_type=OrderType.LIMIT,
-                                        price=Decimal(price)
-                                    )
-
-                                # to avoid the 300 orders per 10s limit
-                                # time.sleep(0.034)
-                                time.sleep(0.2)
+                    orders_to_exec_list_dict = dict()
+                    for connector_name, connector in self.connectors.items():
+                        instruction_list = instruction_list_dict["connector_instruction_list"][connector_name]
+                        orders_to_exec_list_dict[connector_name] = instruction_list
+                    self.is_executing = True
+                    self.executing_segment = 0
+            ######################################################################################################
+            # End: Receive order instruction from commander script, and save to temporary variables
+            ######################################################################################################
 
             ######################################################################################################
-            # End: Receive order instruction from commander script, and send order
+            # Begin: Send order from temporary variables
+            ######################################################################################################
+            if self.is_executing:
+                segment_bgn = self.executing_segment * self.orders_per_clock_time
+                segment_end = (self.executing_segment + 1) * self.orders_per_clock_time
+
+                is_exec_done = True
+                for connector_name, connector in self.connectors.items():
+                    orders_to_cancel_dict = self.orders_to_cancel_dict
+                    instruction_list = self.orders_to_exec_list_dict[connector_name]
+
+                    for instruction in instruction_list[segment_bgn: segment_end]:
+                        ticker = instruction["ticker"]
+                        is_buy = True if instruction["side"] == "B" else False
+                        # base_ccy = instruction["base_ccy"]
+                        # quote_ccy = instruction["quote_ccy"]
+                        price = instruction["price"]
+                        qty = instruction["qty"]
+
+                        if (connector_name, ticker, is_buy) in orders_to_cancel_dict:
+                            cancel_order_id = orders_to_cancel_dict[(connector_name, ticker, is_buy)]
+                            if self.ready2trade:
+                                self.cancel(
+                                    connector_name=connector_name,
+                                    trading_pair=ticker,
+                                    order_id=cancel_order_id,
+                                )
+
+                        if self.ready2trade:
+                            if is_buy:
+                                self.buy(
+                                    connector_name=connector_name,
+                                    trading_pair=ticker,
+                                    amount=Decimal(qty),
+                                    order_type=OrderType.LIMIT,
+                                    price=Decimal(price)
+                                )
+                            else:
+                                self.sell(
+                                    connector_name=connector_name,
+                                    trading_pair=ticker,
+                                    amount=Decimal(qty),
+                                    order_type=OrderType.LIMIT,
+                                    price=Decimal(price)
+                                )
+
+                        is_exec_done = False
+
+                self.executing_segment = self.executing_segment + 1
+
+                if is_exec_done:
+                    self.is_executing = False
+                    self.executing_segment = 0
+            ######################################################################################################
+            # End: Send order from temporary variables
             ######################################################################################################
 
             ######################################################################################################
