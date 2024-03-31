@@ -141,7 +141,7 @@ class SimpleAccountManager(ScriptStrategyBase):
 
                                 # to avoid the 300 orders per 10s limit
                                 # time.sleep(0.034)
-                                time.sleep(0.05)
+                                time.sleep(0.1)
 
                                 # order = LimitOrder(
                                 #     client_order_id="",
