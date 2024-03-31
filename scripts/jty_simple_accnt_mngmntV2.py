@@ -97,8 +97,9 @@ class SimpleAccountManager(ScriptStrategyBase):
 
                     orders_to_exec_list_dict = dict()
                     for connector_name, connector in self.connectors.items():
-                        instruction_list = instruction_list_dict["connector_instruction_list"][connector_name]
-                        orders_to_exec_list_dict[connector_name] = instruction_list
+                        if ("connector_instruction_list" in instruction_list_dict) & (connector_name in instruction_list_dict["connector_instruction_list"]):
+                            instruction_list = instruction_list_dict["connector_instruction_list"][connector_name]
+                            orders_to_exec_list_dict[connector_name] = instruction_list
                     self.is_executing = True
                     self.executing_segment = 0
             ######################################################################################################
@@ -115,44 +116,45 @@ class SimpleAccountManager(ScriptStrategyBase):
                 is_exec_done = True
                 for connector_name, connector in self.connectors.items():
                     orders_to_cancel_dict = self.orders_to_cancel_dict
-                    instruction_list = self.orders_to_exec_list_dict[connector_name]
+                    if connector_name in orders_to_exec_list_dict:
+                        instruction_list = self.orders_to_exec_list_dict[connector_name]
 
-                    for instruction in instruction_list[segment_bgn: segment_end]:
-                        ticker = instruction["ticker"]
-                        is_buy = True if instruction["side"] == "B" else False
-                        # base_ccy = instruction["base_ccy"]
-                        # quote_ccy = instruction["quote_ccy"]
-                        price = instruction["price"]
-                        qty = instruction["qty"]
+                        for instruction in instruction_list[segment_bgn: segment_end]:
+                            ticker = instruction["ticker"]
+                            is_buy = True if instruction["side"] == "B" else False
+                            # base_ccy = instruction["base_ccy"]
+                            # quote_ccy = instruction["quote_ccy"]
+                            price = instruction["price"]
+                            qty = instruction["qty"]
 
-                        if (connector_name, ticker, is_buy) in orders_to_cancel_dict:
-                            cancel_order_id = orders_to_cancel_dict[(connector_name, ticker, is_buy)]
+                            if (connector_name, ticker, is_buy) in orders_to_cancel_dict:
+                                cancel_order_id = orders_to_cancel_dict[(connector_name, ticker, is_buy)]
+                                if self.ready2trade:
+                                    self.cancel(
+                                        connector_name=connector_name,
+                                        trading_pair=ticker,
+                                        order_id=cancel_order_id,
+                                    )
+
                             if self.ready2trade:
-                                self.cancel(
-                                    connector_name=connector_name,
-                                    trading_pair=ticker,
-                                    order_id=cancel_order_id,
-                                )
+                                if is_buy:
+                                    self.buy(
+                                        connector_name=connector_name,
+                                        trading_pair=ticker,
+                                        amount=Decimal(qty),
+                                        order_type=OrderType.LIMIT,
+                                        price=Decimal(price)
+                                    )
+                                else:
+                                    self.sell(
+                                        connector_name=connector_name,
+                                        trading_pair=ticker,
+                                        amount=Decimal(qty),
+                                        order_type=OrderType.LIMIT,
+                                        price=Decimal(price)
+                                    )
 
-                        if self.ready2trade:
-                            if is_buy:
-                                self.buy(
-                                    connector_name=connector_name,
-                                    trading_pair=ticker,
-                                    amount=Decimal(qty),
-                                    order_type=OrderType.LIMIT,
-                                    price=Decimal(price)
-                                )
-                            else:
-                                self.sell(
-                                    connector_name=connector_name,
-                                    trading_pair=ticker,
-                                    amount=Decimal(qty),
-                                    order_type=OrderType.LIMIT,
-                                    price=Decimal(price)
-                                )
-
-                        is_exec_done = False
+                            is_exec_done = False
 
                 self.executing_segment = self.executing_segment + 1
 
