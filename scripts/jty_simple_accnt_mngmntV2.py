@@ -57,7 +57,7 @@ class SimpleAccountManager(ScriptStrategyBase):
     ######################################################################################################
     # Begin: order execution related variables
     ######################################################################################################
-    orders_per_clock_time = 15 # per 3 sec
+    orders_per_clock_time = 10 # per 3 sec
     is_executing = False
     executing_segment = 0
     last_segment = 0
