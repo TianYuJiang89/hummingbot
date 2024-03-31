@@ -167,23 +167,25 @@ class SimpleAccountManager(ScriptStrategyBase):
             ######################################################################################################
             # Begin: Send data to commander script
             ######################################################################################################
-            acc_info = dict()
-            # account balance info
-            balance_data_list = self.get_balance_info()
-            acc_info["balance_data_list"] = balance_data_list
+            # don't pull position data during executing order, to save api calls
+            if not self.is_executing:
+                acc_info = dict()
+                # account balance info
+                balance_data_list = self.get_balance_info()
+                acc_info["balance_data_list"] = balance_data_list
 
-            # active orders info
-            active_orders_data_list = self.get_active_orders_info()
-            acc_info["active_orders_data_list"] = active_orders_data_list
+                # active orders info
+                active_orders_data_list = self.get_active_orders_info()
+                acc_info["active_orders_data_list"] = active_orders_data_list
 
-            # active positions info
-            active_positions_data_list = self.get_active_positions_info()
-            acc_info["active_positions_data_list"] = active_positions_data_list
+                # active positions info
+                active_positions_data_list = self.get_active_positions_info()
+                acc_info["active_positions_data_list"] = active_positions_data_list
 
-            utcnow_stamp = datetime.now(tz=timezone.utc).timestamp()
+                utcnow_stamp = datetime.now(tz=timezone.utc).timestamp()
 
-            self.r.hset(self.acc2cmd_cache_name, self.INSTANCE_NAME, json.dumps(acc_info))
-            self.r.hset(self.acc2cmd_heartbeat_cache_name, self.INSTANCE_NAME, utcnow_stamp)
+                self.r.hset(self.acc2cmd_cache_name, self.INSTANCE_NAME, json.dumps(acc_info))
+                self.r.hset(self.acc2cmd_heartbeat_cache_name, self.INSTANCE_NAME, utcnow_stamp)
             ######################################################################################################
             # End: Send data to commander script
             ######################################################################################################
