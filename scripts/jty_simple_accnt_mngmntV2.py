@@ -83,10 +83,10 @@ class SimpleAccountManager(ScriptStrategyBase):
             if self.last_instruction_lastupddttm != instruction_lastupddttm:
                 self.last_instruction_lastupddttm = instruction_lastupddttm
 
-                orders_to_cancel_dict = dict()
+                self.orders_to_cancel_dict = dict()
                 for connector_name, connector in self.connectors.items():
                     orders_to_cancel = self.get_active_orders(connector_name)
-                    orders_to_cancel_dict.update({(connector_name, order.trading_pair, order.is_buy): order.client_order_id for order in orders_to_cancel})
+                    self.orders_to_cancel_dict.update({(connector_name, order.trading_pair, order.is_buy): order.client_order_id for order in orders_to_cancel})
 
 
                 instruction_list_dict_str = self.r.hget(self.cmd2acc_cache_name, self.INSTANCE_NAME)
@@ -95,11 +95,11 @@ class SimpleAccountManager(ScriptStrategyBase):
                     ready2trade = instruction_list_dict["ready2trade"]
                     self.ready2trade = ready2trade
 
-                    orders_to_exec_list_dict = dict()
+                    self.orders_to_exec_list_dict = dict()
                     for connector_name, connector in self.connectors.items():
                         if ("connector_instruction_list" in instruction_list_dict) & (connector_name in instruction_list_dict["connector_instruction_list"]):
                             instruction_list = instruction_list_dict["connector_instruction_list"][connector_name]
-                            orders_to_exec_list_dict[connector_name] = instruction_list
+                            self.orders_to_exec_list_dict[connector_name] = instruction_list
                     self.is_executing = True
                     self.executing_segment = 0
             ######################################################################################################
@@ -115,8 +115,7 @@ class SimpleAccountManager(ScriptStrategyBase):
 
                 is_exec_done = True
                 for connector_name, connector in self.connectors.items():
-                    orders_to_cancel_dict = self.orders_to_cancel_dict
-                    if connector_name in orders_to_exec_list_dict:
+                    if connector_name in self.orders_to_exec_list_dict:
                         instruction_list = self.orders_to_exec_list_dict[connector_name]
 
                         for instruction in instruction_list[segment_bgn: segment_end]:
@@ -127,8 +126,8 @@ class SimpleAccountManager(ScriptStrategyBase):
                             price = instruction["price"]
                             qty = instruction["qty"]
 
-                            if (connector_name, ticker, is_buy) in orders_to_cancel_dict:
-                                cancel_order_id = orders_to_cancel_dict[(connector_name, ticker, is_buy)]
+                            if (connector_name, ticker, is_buy) in self.orders_to_cancel_dict:
+                                cancel_order_id = self.orders_to_cancel_dict[(connector_name, ticker, is_buy)]
                                 if self.ready2trade:
                                     self.cancel(
                                         connector_name=connector_name,
