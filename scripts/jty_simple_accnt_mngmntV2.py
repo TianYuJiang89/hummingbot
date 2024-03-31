@@ -97,7 +97,7 @@ class SimpleAccountManager(ScriptStrategyBase):
 
                     self.orders_to_exec_list_dict = dict()
                     for connector_name, connector in self.connectors.items():
-                        if ("connector_instruction_list" in instruction_list_dict) & (connector_name in instruction_list_dict["connector_instruction_list"]):
+                        if ("connector_instruction_list" in instruction_list_dict) and (connector_name in instruction_list_dict["connector_instruction_list"]):
                             instruction_list = instruction_list_dict["connector_instruction_list"][connector_name]
                             self.orders_to_exec_list_dict[connector_name] = instruction_list
                     self.is_executing = True
