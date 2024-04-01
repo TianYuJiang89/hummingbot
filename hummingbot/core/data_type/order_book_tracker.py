@@ -178,12 +178,13 @@ class OrderBookTracker:
         """
         for index, trading_pair in enumerate(self._trading_pairs[:]):
             # Begin Modify by tianyu 20230907
-            # self._order_books[trading_pair] = await self._initial_order_book_for_trading_pair(trading_pair)
-            # self._tracking_message_queues[trading_pair] = asyncio.Queue()
-            # self._tracking_tasks[trading_pair] = safe_ensure_future(self._track_single_book(trading_pair))
-            # self.logger().info(f"Initialized order book for {trading_pair}. "
-            #                    f"{index + 1}/{len(self._trading_pairs)} completed.")
-            # await self._sleep(delay=1)
+            self._order_books[trading_pair] = await self._initial_order_book_for_trading_pair(trading_pair)
+            self._tracking_message_queues[trading_pair] = asyncio.Queue()
+            self._tracking_tasks[trading_pair] = safe_ensure_future(self._track_single_book(trading_pair))
+            self.logger().info(f"Initialized order book for {trading_pair}. "
+                               f"{index + 1}/{len(self._trading_pairs)} completed.")
+            await self._sleep(delay=1)
+            '''
             try:
                 self._order_books[trading_pair] = await self._initial_order_book_for_trading_pair(trading_pair)
                 self._tracking_message_queues[trading_pair] = asyncio.Queue()
@@ -198,6 +199,7 @@ class OrderBookTracker:
                 except ValueError:
                     pass
                 continue
+            '''
             # End Modify by tianyu 20230907
         self._order_books_initialized.set()
 

@@ -117,8 +117,9 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                 params = []
                 for trading_pair in self._trading_pairs[:]:
                     # Begin Modify by tianyu 20230907
-                    # symbol = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
-                    # params.append(f"{symbol.lower()}{channel}")
+                    symbol = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
+                    params.append(f"{symbol.lower()}{channel}")
+                    '''
                     try:
                         symbol = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
                         params.append(f"{symbol.lower()}{channel}")
@@ -129,6 +130,7 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                         except ValueError:
                             pass
                         continue
+                    '''
                     # End Modify by tianyu 20230907
                 payload = {
                     "method": "SUBSCRIBE",
@@ -189,9 +191,10 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
             try:
                 for trading_pair in self._trading_pairs[:]:
                     # Begin Modify by tianyu 20230907
-                    # snapshot_msg: OrderBookMessage = await self._order_book_snapshot(trading_pair)
-                    # output.put_nowait(snapshot_msg)
-                    # self.logger().debug(f"Saved order book snapshot for {trading_pair}")
+                    snapshot_msg: OrderBookMessage = await self._order_book_snapshot(trading_pair)
+                    output.put_nowait(snapshot_msg)
+                    self.logger().debug(f"Saved order book snapshot for {trading_pair}")
+                    '''
                     try:
                         snapshot_msg: OrderBookMessage = await self._order_book_snapshot(trading_pair)
                         output.put_nowait(snapshot_msg)
@@ -203,6 +206,7 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
                         except ValueError:
                             pass
                         continue
+                    '''
                     # End Modify by tianyu 20230907
                 delta = CONSTANTS.ONE_HOUR - time.time() % CONSTANTS.ONE_HOUR
                 await self._sleep(delta)
