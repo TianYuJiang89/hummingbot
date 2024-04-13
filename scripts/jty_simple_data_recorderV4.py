@@ -28,7 +28,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
     redis_port = 6379
     # config_cache_name = "test_instance_markets_cache"
     # data_cache_name = "test_data_cache"
-    config_cache_name = "instance_markets_cache"
+    config_cache_name = "md_instance_markets_cache"
     data_cache_name = "data_cache"
     log_cache_name = "spend_time"
     heartbeat_cache_name = "lastupddttm"
