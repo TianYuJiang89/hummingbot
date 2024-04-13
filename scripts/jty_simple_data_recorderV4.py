@@ -46,7 +46,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
     # To configure which exchange/ticker need to be record
     VPS_INSTANCE_ID = os.getenv("VPS_INSTANCE_ID")
     INSTANCE_NAME = os.getenv("CONFIG_INSTANCE_ID")
-    markets = json.loads(r.hget(config_cache_name, VPS_INSTANCE_ID))[INSTANCE_NAME]
+    markets = json.loads(r.hget(config_cache_name, VPS_INSTANCE_ID))["markets"][INSTANCE_NAME]
     ######################################################################################################
     # End: Record Range Settings
     ######################################################################################################
