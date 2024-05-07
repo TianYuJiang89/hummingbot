@@ -14,6 +14,7 @@ from hummingbot.core.web_assistant.connections.data_types import WSJSONRequest
 from hummingbot.core.web_assistant.web_assistants_factory import WebAssistantsFactory
 from hummingbot.core.web_assistant.ws_assistant import WSAssistant
 from hummingbot.logger import HummingbotLogger
+import traceback
 
 if TYPE_CHECKING:
     from hummingbot.connector.derivative.binance_perpetual.binance_perpetual_derivative import (
@@ -63,10 +64,20 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
     async def _request_order_book_snapshot(self, trading_pair: str) -> Dict[str, Any]:
         ex_trading_pair = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
 
+        # Begin Modify by tianyu 20230907
+        # Limit           Weight
+        # 5, 10, 20, 50   2
+        # 100             5
+        # 500             10
+        # 1000            20
         params = {
             "symbol": ex_trading_pair,
-            "limit": "1000"
+            # "limit": "1000",
+            "limit": "100",
         }
+
+        # await self._sleep(0.5)
+        # End Modify by tianyu 20230907
 
         data = await self._connector._api_get(
             path_url=CONSTANTS.SNAPSHOT_REST_URL,
@@ -104,9 +115,23 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
             ]
             for stream_id, channel in stream_id_channel_pairs:
                 params = []
-                for trading_pair in self._trading_pairs:
+                for trading_pair in self._trading_pairs[:]:
+                    # Begin Modify by tianyu 20230907
                     symbol = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
                     params.append(f"{symbol.lower()}{channel}")
+                    '''
+                    try:
+                        symbol = await self._connector.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
+                        params.append(f"{symbol.lower()}{channel}")
+                    except KeyError:
+                        self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
+                        try:
+                            self._trading_pairs.remove(trading_pair)
+                        except ValueError:
+                            pass
+                        continue
+                    '''
+                    # End Modify by tianyu 20230907
                 payload = {
                     "method": "SUBSCRIBE",
                     "params": params,
@@ -164,10 +189,25 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
     async def listen_for_order_book_snapshots(self, ev_loop: asyncio.BaseEventLoop, output: asyncio.Queue):
         while True:
             try:
-                for trading_pair in self._trading_pairs:
+                for trading_pair in self._trading_pairs[:]:
+                    # Begin Modify by tianyu 20230907
                     snapshot_msg: OrderBookMessage = await self._order_book_snapshot(trading_pair)
                     output.put_nowait(snapshot_msg)
                     self.logger().debug(f"Saved order book snapshot for {trading_pair}")
+                    '''
+                    try:
+                        snapshot_msg: OrderBookMessage = await self._order_book_snapshot(trading_pair)
+                        output.put_nowait(snapshot_msg)
+                        self.logger().debug(f"Saved order book snapshot for {trading_pair}")
+                    except KeyError:
+                        self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
+                        try:
+                            self._trading_pairs.remove(trading_pair)
+                        except ValueError:
+                            pass
+                        continue
+                    '''
+                    # End Modify by tianyu 20230907
                 delta = CONSTANTS.ONE_HOUR - time.time() % CONSTANTS.ONE_HOUR
                 await self._sleep(delta)
             except asyncio.CancelledError:
@@ -182,7 +222,6 @@ class BinancePerpetualAPIOrderBookDataSource(PerpetualAPIOrderBookDataSource):
 
         data: Dict[str, Any] = raw_message["data"]
         trading_pair = await self._connector.trading_pair_associated_to_exchange_symbol(data["s"])
-
         if trading_pair not in self._trading_pairs:
             return
         funding_info = FundingInfoUpdate(

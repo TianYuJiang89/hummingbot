@@ -20,6 +20,7 @@ from hummingbot.core.event.events import (
     PositionModeChangeEvent,
 )
 from hummingbot.core.utils.async_utils import safe_ensure_future, safe_gather
+import traceback
 
 if TYPE_CHECKING:
     from hummingbot.client.config.config_helpers import ClientConfigAdapter
@@ -51,7 +52,10 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
         A dictionary of statuses of various exchange's components. Used to determine if the connector is ready
         """
         status_d = super().status_dict
-        status_d["funding_info"] = self._perpetual_trading.is_funding_info_initialized()
+        # Begin Modify by tianyu 20230907
+        # status_d["funding_info"] = self._perpetual_trading.is_funding_info_initialized()
+        status_d["funding_info"] = self.is_trading_required or self._perpetual_trading.is_funding_info_initialized()
+        # End Modify by tianyu 20230907
         return status_d
 
     @property
@@ -95,9 +99,19 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
     async def start_network(self):
         await super().start_network()
         self._perpetual_trading.start()
+        # Begin Modify by tianyu 20230907
+        """
         self._funding_info_listener_task = safe_ensure_future(self._listen_for_funding_info())
         if self.is_trading_required:
             self._funding_fee_polling_task = safe_ensure_future(self._funding_payment_polling_loop())
+        """
+        if self.is_trading_required:
+            pass
+        else:
+            self._funding_info_listener_task = safe_ensure_future(self._listen_for_funding_info())
+            # 下面这个函数用户作用是funding into轮询，每次会耗掉大量的api call，所以暂时注释掉
+            # self._funding_fee_polling_task = safe_ensure_future(self._funding_payment_polling_loop())
+        # End Modify by tianyu 20230907
 
     def set_position_mode(self, mode: PositionMode):
         """
@@ -367,9 +381,23 @@ class PerpetualDerivativePyBase(ExchangePyBase, ABC):
         )
 
     async def _init_funding_info(self):
-        for trading_pair in self.trading_pairs:
+        for trading_pair in self.trading_pairs[:]:
+            # Begin Modify by tianyu 20230907
             funding_info = await self._orderbook_ds.get_funding_info(trading_pair)
             self._perpetual_trading.initialize_funding_info(funding_info)
+            '''
+            try:
+                funding_info = await self._orderbook_ds.get_funding_info(trading_pair)
+                self._perpetual_trading.initialize_funding_info(funding_info)
+            except KeyError:
+                self.logger().warning(f"Catched Exception: {traceback.format_exc()}")
+                try:
+                    self.trading_pairs.remove(trading_pair)
+                except ValueError:
+                    pass
+                continue
+            '''
+            # End Modify by tianyu 20230907
 
     async def _funding_payment_polling_loop(self):
         """
