@@ -83,8 +83,8 @@ class SimpleDataRecorder(ScriptStrategyBase):
     ######################################################################################################
     # variable for calculating the "dollar amount mid" and "dollar amount bid" and "dollar amount ask"
     volume_measurement_amount = Decimal(100.)
-    # portfolio_currency = "USDT"
-    portfolio_currency = "USD"
+    portfolio_currency = "USDT"
+    # portfolio_currency = "USD"
 
     # notes about quote_conversion_rate:
     # conversion rate = the exchange rate of quote_asset/portfolio_currency
