@@ -179,6 +179,7 @@ class BinancePerpetualDerivative(PerpetualDerivativePyBase):
                  quote_currency: str,
                  order_type: OrderType,
                  order_side: TradeType,
+                 position_action: PositionAction,
                  amount: Decimal,
                  price: Decimal = s_decimal_NaN,
                  is_maker: Optional[bool] = None) -> TradeFeeBase:
@@ -278,11 +279,11 @@ class BinancePerpetualDerivative(PerpetualDerivativePyBase):
                 raise
         return o_id, transact_time
 
-    async def _all_trade_updates_for_order(self, tracked_order: InFlightOrder) -> List[TradeUpdate]:
+    async def _all_trade_updates_for_order(self, order: InFlightOrder) -> List[TradeUpdate]:
         trade_updates = []
         try:
-            exchange_order_id = await tracked_order.get_exchange_order_id()
-            trading_pair = await self.exchange_symbol_associated_to_pair(trading_pair=tracked_order.trading_pair)
+            exchange_order_id = await order.get_exchange_order_id()
+            trading_pair = await self.exchange_symbol_associated_to_pair(trading_pair=order.trading_pair)
             all_fills_response = await self._api_get(
                 path_url=CONSTANTS.ACCOUNT_TRADE_LIST_URL,
                 params={
@@ -295,8 +296,8 @@ class BinancePerpetualDerivative(PerpetualDerivativePyBase):
                 if order_id == exchange_order_id:
                     position_side = trade["positionSide"]
                     position_action = (PositionAction.OPEN
-                                       if (tracked_order.trade_type is TradeType.BUY and position_side == "LONG"
-                                           or tracked_order.trade_type is TradeType.SELL and position_side == "SHORT")
+                                       if (order.trade_type is TradeType.BUY and position_side == "LONG"
+                                           or order.trade_type is TradeType.SELL and position_side == "SHORT")
                                        else PositionAction.CLOSE)
                     fee = TradeFeeBase.new_perpetual_fee(
                         fee_schema=self.trade_fee_schema(),
@@ -306,9 +307,9 @@ class BinancePerpetualDerivative(PerpetualDerivativePyBase):
                     )
                     trade_update: TradeUpdate = TradeUpdate(
                         trade_id=str(trade["id"]),
-                        client_order_id=tracked_order.client_order_id,
+                        client_order_id=order.client_order_id,
                         exchange_order_id=trade["orderId"],
-                        trading_pair=tracked_order.trading_pair,
+                        trading_pair=order.trading_pair,
                         fill_timestamp=trade["time"] * 1e-3,
                         fill_price=Decimal(trade["price"]),
                         fill_base_amount=Decimal(trade["qty"]),
@@ -318,7 +319,7 @@ class BinancePerpetualDerivative(PerpetualDerivativePyBase):
                     trade_updates.append(trade_update)
 
         except asyncio.TimeoutError:
-            raise IOError(f"Skipped order update with order fills for {tracked_order.client_order_id} "
+            raise IOError(f"Skipped order update with order fills for {order.client_order_id} "
                           "- waiting for exchange order id.")
 
         return trade_updates
@@ -741,7 +742,7 @@ class BinancePerpetualDerivative(PerpetualDerivativePyBase):
         initial_mode = await self._get_position_mode()
         if initial_mode != mode:
             params = {
-                "dualSidePosition": mode.value
+                "dualSidePosition": True if mode == PositionMode.HEDGE else False,
             }
             response = await self._api_post(
                 path_url=CONSTANTS.CHANGE_POSITION_MODE_URL,

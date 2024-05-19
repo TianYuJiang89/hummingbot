@@ -492,7 +492,7 @@ class GatewayHttpClient:
             "quote": quote_asset,
             "side": side.name,
             "amount": f"{amount:.18f}",
-            "limitPrice": str(price),
+            "limitPrice": f"{price:.20f}",
             "allowedSlippage": "0/1",  # hummingbot applies slippage itself
         }
         if nonce is not None:
@@ -792,12 +792,14 @@ class GatewayHttpClient:
             network: str,
             connector: str,
             token_id: int,
+            address: Optional[str] = ''
     ) -> Dict[str, Any]:
         request_payload: Dict[str, Any] = {
             "chain": chain,
             "network": network,
             "connector": connector,
             "tokenId": token_id,
+            "address": address,
         }
         return await self.api_request("post", "amm/liquidity/position", request_payload)
 

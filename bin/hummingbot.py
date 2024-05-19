@@ -15,6 +15,7 @@ from hummingbot.client.config.config_helpers import (
     load_client_config_map_from_file,
     write_config_to_yml,
 )
+from hummingbot.client.config.security import Security
 from hummingbot.client.hummingbot_application import HummingbotApplication
 from hummingbot.client.settings import AllConnectorSettings
 from hummingbot.client.ui import login_prompt
@@ -26,17 +27,24 @@ from hummingbot.core.utils.async_utils import safe_gather
 
 
 class UIStartListener(EventListener):
+
     def __init__(self, hummingbot_app: HummingbotApplication,
                  is_script: Optional[bool] = False,
+                 script_config: Optional[dict] = None,
                  is_quickstart: Optional[bool] = False,
                  api_type: Optional[str] = None,):
+
         super().__init__()
         self._hb_ref: ReferenceType = ref(hummingbot_app)
         self._is_script = is_script
         self._is_quickstart = is_quickstart
+
+        self._script_config = script_config
+
         # Begin Add By Tianyu 20230907
         self._api_type = api_type
         # End Add By Tianyu 20230907
+
 
     def __call__(self, _):
         asyncio.create_task(self.ui_start_handler())
@@ -56,11 +64,13 @@ class UIStartListener(EventListener):
             #          is_quickstart=self._is_quickstart)
             hb.start(log_level=hb.client_config_map.log_level,
                      script=hb.strategy_name if self._is_script else None,
+                     conf=self._script_config,
                      is_quickstart=self._is_quickstart,
                      api_type=self._api_type)
             # End Add By Tianyu 20230907
 
 async def main_async(client_config_map: ClientConfigAdapter):
+    await Security.wait_til_decryption_done()
     await create_yml_files_legacy()
 
     # This init_logging() call is important, to skip over the missing config warnings.

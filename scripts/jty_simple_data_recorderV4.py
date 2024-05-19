@@ -83,8 +83,8 @@ class SimpleDataRecorder(ScriptStrategyBase):
     ######################################################################################################
     # variable for calculating the "dollar amount mid" and "dollar amount bid" and "dollar amount ask"
     volume_measurement_amount = Decimal(100.)
-    # portfolio_currency = "USDT"
-    portfolio_currency = "USD"
+    portfolio_currency = "USDT"
+    # portfolio_currency = "USD"
 
     # notes about quote_conversion_rate:
     # conversion rate = the exchange rate of quote_asset/portfolio_currency
@@ -147,8 +147,10 @@ class SimpleDataRecorder(ScriptStrategyBase):
                     min_notional_size = connector.trading_rules[asset].min_notional_size
                     if self.is_perpetual(connector_name):
                         funding_rate = connector.get_funding_info(asset).rate
+                        next_funding_utc_timestamp = connector.get_funding_info(asset).next_funding_utc_timestamp
                     else:
                         funding_rate = 0.
+                        next_funding_utc_timestamp = np.nan
 
                     # reset the active trade volume counter
                     self.active_buy_sell_vol[(connector_name, asset)] = 0., 0.
@@ -171,6 +173,7 @@ class SimpleDataRecorder(ScriptStrategyBase):
                     p["mns"] = float(min_notional_size)
                     p["qcr"] = float(quote_conversion_rate)
                     p["funding_rate"] = float(funding_rate)
+                    p["nfdts"] = float(next_funding_utc_timestamp)
                     for _ in range(1, self.depth_lvl + 1):
                         bid_result = connector.get_quote_volume_for_base_amount(asset, False, amount * _)
                         avg_bid = bid_result.result_volume / bid_result.query_volume

@@ -29,6 +29,7 @@ from hummingbot.connector.connector_metrics_collector import (
 from hummingbot.connector.exchange.ascend_ex.ascend_ex_utils import AscendExConfigMap
 from hummingbot.connector.exchange.binance.binance_utils import BinanceConfigMap
 from hummingbot.connector.exchange.gate_io.gate_io_utils import GateIOConfigMap
+from hummingbot.connector.exchange.injective_v2.injective_v2_utils import InjectiveConfigMap
 from hummingbot.connector.exchange.kucoin.kucoin_utils import KuCoinConfigMap
 from hummingbot.connector.exchange_base import ExchangeBase
 from hummingbot.core.rate_oracle.rate_oracle import RATE_ORACLE_SOURCES, RateOracle
@@ -306,6 +307,7 @@ class PaperTradeConfigMap(BaseClientModel):
             KuCoinConfigMap.Config.title,
             AscendExConfigMap.Config.title,
             GateIOConfigMap.Config.title,
+            InjectiveConfigMap.Config.title,
         ],
     )
     paper_trade_account_balance: Dict[str, float] = Field(
@@ -766,6 +768,28 @@ class BinanceRateSourceMode(ExchangeRateSourceModeBase):
         title = "binance"
 
 
+class BinanceUSRateSourceMode(ExchangeRateSourceModeBase):
+    name: str = Field(
+        default="binance_us",
+        const=True,
+        client_data=None,
+    )
+
+    class Config:
+        title = "binance_us"
+
+
+class CubeRateSourceMode(ExchangeRateSourceModeBase):
+    name: str = Field(
+        default="cube",
+        const=True,
+        client_data=None,
+    )
+
+    class Config:
+        title = "cube"
+
+
 class CoinGeckoRateSourceMode(RateSourceModeBase):
     name: str = Field(
         default="coin_gecko",
@@ -908,13 +932,27 @@ class GateIoRateSourceMode(ExchangeRateSourceModeBase):
         title: str = "gate_io"
 
 
+class CoinbaseAdvancedTradeRateSourceMode(ExchangeRateSourceModeBase):
+    name: str = Field(
+        default="coinbase_advanced_trade",
+        const=True,
+        client_data=None,
+    )
+
+    class Config:
+        title: str = "coinbase_advanced_trade"
+
+
 RATE_SOURCE_MODES = {
     AscendExRateSourceMode.Config.title: AscendExRateSourceMode,
     BinanceRateSourceMode.Config.title: BinanceRateSourceMode,
+    BinanceUSRateSourceMode.Config.title: BinanceUSRateSourceMode,
     CoinGeckoRateSourceMode.Config.title: CoinGeckoRateSourceMode,
     CoinCapRateSourceMode.Config.title: CoinCapRateSourceMode,
     KuCoinRateSourceMode.Config.title: KuCoinRateSourceMode,
     GateIoRateSourceMode.Config.title: GateIoRateSourceMode,
+    CoinbaseAdvancedTradeRateSourceMode.Config.title: CoinbaseAdvancedTradeRateSourceMode,
+    CubeRateSourceMode.Config.title: CubeRateSourceMode,
 }
 
 

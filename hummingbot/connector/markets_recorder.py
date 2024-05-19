@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os.path
 import threading
@@ -34,6 +35,8 @@ from hummingbot.core.event.events import (
     SellOrderCreatedEvent,
 )
 from hummingbot.logger import HummingbotLogger
+from hummingbot.model.controllers import Controllers
+from hummingbot.model.executors import Executors
 from hummingbot.model.funding_payment import FundingPayment
 from hummingbot.model.market_data import MarketData
 from hummingbot.model.market_state import MarketState
@@ -43,10 +46,13 @@ from hummingbot.model.range_position_collected_fees import RangePositionCollecte
 from hummingbot.model.range_position_update import RangePositionUpdate
 from hummingbot.model.sql_connection_manager import SQLConnectionManager
 from hummingbot.model.trade_fill import TradeFill
+from hummingbot.smart_components.controllers.controller_base import ControllerConfigBase
+from hummingbot.smart_components.models.executors_info import ExecutorInfo
 
 
 class MarketsRecorder:
     _logger = None
+    _shared_instance: "MarketsRecorder" = None
     market_event_tag_map: Dict[int, MarketEvent] = {
         event_obj.value: event_obj
         for event_obj in MarketEvent.__members__.values()
@@ -57,6 +63,12 @@ class MarketsRecorder:
         if cls._logger is None:
             cls._logger = logging.getLogger(__name__)
         return cls._logger
+
+    @classmethod
+    def get_instance(cls, *args, **kwargs) -> "MarketsRecorder":
+        if cls._shared_instance is None:
+            cls._shared_instance = MarketsRecorder(*args, **kwargs)
+        return cls._shared_instance
 
     def __init__(self,
                  sql: SQLConnectionManager,
@@ -112,6 +124,7 @@ class MarketsRecorder:
             (MarketEvent.RangePositionFeeCollected, self._update_range_position_forwarder),
             (MarketEvent.RangePositionClosed, self._close_range_position_forwarder),
         ]
+        MarketsRecorder._shared_instance = self
 
     def _start_market_data_recording(self):
         self._market_data_collection_task = self._ev_loop.create_task(self._record_market_data())
@@ -178,6 +191,42 @@ class MarketsRecorder:
                 market.remove_listener(event_pair[0], event_pair[1])
         if self._market_data_collection_task is not None:
             self._market_data_collection_task.cancel()
+
+    def store_or_update_executor(self, executor):
+        with self._sql_manager.get_new_session() as session:
+            existing_executor = session.query(Executors).filter(Executors.id == executor.config.id).one_or_none()
+
+            if existing_executor:
+                # Update existing executor
+                for attr, value in vars(executor).items():
+                    setattr(existing_executor, attr, value)
+            else:
+                # Insert new executor
+                serialized_config = executor.executor_info.json()
+                new_executor = Executors(**json.loads(serialized_config))
+                session.add(new_executor)
+            session.commit()
+
+    def store_controller_config(self, controller_config: ControllerConfigBase):
+        with self._sql_manager.get_new_session() as session:
+            config = json.loads(controller_config.json())
+            base_columns = ["id", "timestamp", "type"]
+            controller = Controllers(id=config["id"],
+                                     timestamp=time.time(),
+                                     type=config["controller_type"],
+                                     config={k: v for k, v in config.items() if k not in base_columns})
+            session.add(controller)
+            session.commit()
+
+    def get_executors_by_ids(self, executor_ids: List[str]):
+        with self._sql_manager.get_new_session() as session:
+            executors = session.query(Executors).filter(Executors.id.in_(executor_ids)).all()
+            return executors
+
+    def get_executors_by_controller(self, controller_id: str = None) -> List[ExecutorInfo]:
+        with self._sql_manager.get_new_session() as session:
+            executors = session.query(Executors).filter(Executors.controller_id == controller_id).all()
+            return [executor.to_executor_info() for executor in executors]
 
     def get_orders_for_config_and_market(self, config_file_path: str, market: ConnectorBase,
                                          with_exchange_order_id_present: Optional[bool] = False,

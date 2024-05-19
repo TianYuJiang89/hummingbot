@@ -3,7 +3,7 @@ import time
 from decimal import Decimal
 from typing import Awaitable
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import numpy as np
 from sqlalchemy import create_engine
@@ -26,9 +26,27 @@ from hummingbot.model.market_data import MarketData
 from hummingbot.model.order import Order
 from hummingbot.model.sql_connection_manager import SQLConnectionManager, SQLConnectionType
 from hummingbot.model.trade_fill import TradeFill
+from hummingbot.strategy.script_strategy_base import ScriptStrategyBase
 
 
 class MarketsRecorderTests(TestCase):
+    @staticmethod
+    def create_mock_strategy():
+        market = MagicMock()
+        market_info = MagicMock()
+        market_info.market = market
+
+        strategy = MagicMock(spec=ScriptStrategyBase)
+        type(strategy).market_info = PropertyMock(return_value=market_info)
+        type(strategy).trading_pair = PropertyMock(return_value="ETH-USDT")
+        strategy.buy.side_effect = ["OID-BUY-1", "OID-BUY-2", "OID-BUY-3"]
+        strategy.sell.side_effect = ["OID-SELL-1", "OID-SELL-2", "OID-SELL-3"]
+        strategy.cancel.return_value = None
+        strategy.connectors = {
+            "binance_perpetual": MagicMock(),
+        }
+        return strategy
+
     @staticmethod
     def async_run_with_timeout(coroutine: Awaitable, timeout: int = 1):
         ret = asyncio.get_event_loop().run_until_complete(asyncio.wait_for(coroutine, timeout))

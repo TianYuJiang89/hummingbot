@@ -87,12 +87,6 @@ class GateioPerpetualCandles(CandlesBase):
                             limit: Optional[int] = 500):
         rest_assistant = await self._api_factory.get_rest_assistant()
         params = {"contract": self._ex_trading_pair, "interval": self.interval, "limit": limit}
-        if start_time or end_time:
-            del params["limit"]
-        if start_time:
-            params["from"] = str(start_time)
-        if end_time:
-            params["to"] = str(end_time)
 
         candles = await rest_assistant.execute_request(url=self.candles_url,
                                                        throttler_limit_id=CONSTANTS.CANDLES_ENDPOINT,
@@ -118,7 +112,7 @@ class GateioPerpetualCandles(CandlesBase):
     async def fill_historical_candles(self):
         max_request_needed = (self._candles.maxlen // 1000) + 1
         requests_executed = 0
-        while not self.is_ready:
+        while not self.ready:
             missing_records = self._candles.maxlen - len(self._candles)
             end_timestamp = int(int(self._candles[0][0]) * 1e-3)
             try:
