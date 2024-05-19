@@ -28,3 +28,9 @@ class LogPricesExample(ScriptStrategyBase):
 
                 self.logger().info(f"funding_rate: {funding_rate}")
                 self.logger().info(f"next_funding_utc_timestamp: {next_funding_utc_timestamp}")
+
+    def is_perpetual(self, exchange):
+        """
+        Checks if the exchange is a perpetual market.
+        """
+        return "perpetual" in exchange
