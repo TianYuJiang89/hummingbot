@@ -7,7 +7,7 @@ class LogPricesExample(ScriptStrategyBase):
     """
     markets = {
         # "gate_io_paper_trade": {"ETH-USDT"},
-        "binance_perpetual": {"ETH-USDT", "BNB-BUSD"},
+        "binance_perpetual": {"ETH-USDT", "BTC-USDT"},
     }
 
     def on_tick(self):
